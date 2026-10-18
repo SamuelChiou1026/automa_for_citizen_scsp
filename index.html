@@ -1,0 +1,1530 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>社宅場地批量租借：自動化申請全攻略</title>
+<meta name="description" content="利用「HTML 填單工具」與「Automa 機器人」達成社宅場地的批量自動申請，大幅節省手動填單時間。">
+<style>
+:root {
+  --paper: #f6efe2;
+  --paper-2: #efe3cc;
+  --paper-3: #e6d5b5;
+  --ink: #2b2622;
+  --ink-soft: #5d5249;
+  --ink-faint: #8d8174;
+  --red: #c0392b;
+  --red-soft: #e8a598;
+  --teal: #4f8a8b;
+  --teal-soft: #cfe3e0;
+  --pink: #f4bfcc;
+  --pink-deep: #e58fa6;
+  --gold: #c9a227;
+  --green: #3f8f5a;
+  --shadow: 0 10px 30px rgba(72, 52, 30, .12), 0 2px 6px rgba(72, 52, 30, .08);
+  --serif: "Noto Serif TC", "Songti TC", "Source Han Serif TC", "PMingLiU", "MingLiU", serif;
+  --sans: -apple-system, BlinkMacSystemFont, "PingFang TC", "Segoe UI", "Microsoft JhengHei", "Noto Sans TC", sans-serif;
+  --mono: ui-monospace, "SF Mono", Consolas, "Courier New", monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  font-family: var(--sans);
+  color: var(--ink);
+  line-height: 1.75;
+  background-color: var(--paper);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .45 0 0 0 0 .35 0 0 0 0 .2 0 0 0 .09 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E"),
+    radial-gradient(ellipse at 15% 0%, #fbf6ec 0%, transparent 55%),
+    radial-gradient(ellipse at 90% 40%, #f1e4cb 0%, transparent 60%);
+  overflow-x: hidden;
+}
+img, svg { max-width: 100%; }
+a { color: var(--red); }
+::selection { background: var(--pink); }
+
+/* ---------- 共用 ---------- */
+.wrap { width: min(1120px, 92vw); margin: 0 auto; }
+section { padding: 88px 0; position: relative; }
+.serif { font-family: var(--serif); }
+
+.section-head { text-align: center; margin-bottom: 48px; }
+.section-head .kicker {
+  display: inline-block;
+  font-family: var(--serif);
+  letter-spacing: .3em;
+  color: var(--red);
+  font-size: 14px;
+  margin-bottom: 8px;
+}
+.section-head h2 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 4vw, 40px);
+  margin: 0;
+  letter-spacing: .08em;
+}
+.brush {
+  display: block;
+  width: 180px;
+  height: 14px;
+  margin: 14px auto 0;
+}
+.section-head p { color: var(--ink-soft); margin: 14px auto 0; max-width: 640px; }
+
+.card {
+  background: linear-gradient(180deg, #fffaf0, #f8eedb);
+  border: 1px solid rgba(120, 90, 50, .18);
+  border-radius: 14px;
+  box-shadow: var(--shadow);
+  position: relative;
+}
+
+.stamp {
+  display: inline-grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  border: 3px solid var(--red);
+  border-radius: 6px;
+  color: var(--red);
+  font-family: var(--serif);
+  font-size: 26px;
+  font-weight: 700;
+  transform: rotate(-6deg);
+  background: rgba(192, 57, 43, .06);
+  box-shadow: inset 0 0 0 2px rgba(192, 57, 43, .15);
+  flex: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: #2d5f60;
+  font-size: 14px;
+  font-weight: 600;
+}
+.chip.red { background: #f6d9d3; color: #9b2c20; }
+.chip.gold { background: #f3e6b8; color: #7a5f0c; }
+
+kbd, code {
+  font-family: var(--mono);
+  font-size: .92em;
+  background: rgba(120, 90, 50, .1);
+  border: 1px solid rgba(120, 90, 50, .18);
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+/* 捲動進場 */
+.reveal { opacity: 0; transform: translateY(28px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.7,.2,1); }
+.reveal.in { opacity: 1; transform: none; }
+.reveal.d1 { transition-delay: .12s; }
+.reveal.d2 { transition-delay: .24s; }
+.reveal.d3 { transition-delay: .36s; }
+
+/* ---------- 頂部 ---------- */
+#progress {
+  position: fixed; inset: 0 0 auto 0; height: 4px; z-index: 60;
+  background: linear-gradient(90deg, var(--red), var(--pink-deep), var(--gold));
+  transform-origin: 0 50%; transform: scaleX(0);
+}
+#petals { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+
+.topnav {
+  position: sticky; top: 0; z-index: 40;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(246, 239, 226, .78);
+  border-bottom: 1px solid rgba(120, 90, 50, .12);
+}
+.topnav .wrap { display: flex; align-items: center; justify-content: space-between; height: 58px; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; text-decoration: none; color: var(--ink); white-space: nowrap; }
+.brand .mini-stamp { width: 28px; height: 28px; border: 2px solid var(--red); color: var(--red); border-radius: 4px; display: grid; place-items: center; font-size: 15px; transform: rotate(-6deg); }
+.topnav nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.topnav nav::-webkit-scrollbar { display: none; }
+.topnav nav a {
+  text-decoration: none; color: var(--ink-soft); font-size: 14px; padding: 6px 12px; border-radius: 999px; white-space: nowrap;
+  transition: background .2s, color .2s;
+}
+.topnav nav a:hover, .topnav nav a.active { background: var(--ink); color: var(--paper); }
+
+/* ---------- 主視覺 ---------- */
+.hero { padding: 56px 0 40px; overflow: hidden; }
+.hero .wrap { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(0,.95fr); gap: 40px; align-items: center; }
+.scroll-banner { position: relative; padding: 14px 6px; }
+.scroll-banner::before, .scroll-banner::after {
+  content: ""; position: absolute; left: -10px; right: -10px; height: 16px; border-radius: 10px;
+  background: linear-gradient(180deg, #8a5a32, #5e3b1e 60%, #3e2612);
+  box-shadow: 0 3px 6px rgba(0,0,0,.2);
+}
+.scroll-banner::before { top: 0; }
+.scroll-banner::after { bottom: 0; }
+.scroll-paper {
+  background: linear-gradient(90deg, #f3e7cf, #fbf4e6 20%, #fbf4e6 80%, #f3e7cf);
+  padding: 28px 30px;
+  box-shadow: inset 0 0 30px rgba(140, 100, 50, .12);
+  transform-origin: top;
+  animation: unroll 1.2s cubic-bezier(.2,.7,.2,1) both;
+}
+@keyframes unroll { from { clip-path: inset(0 0 100% 0); } to { clip-path: inset(0 0 0 0); } }
+.hero h1 {
+  font-family: var(--serif);
+  font-size: clamp(28px, 3.7vw, 46px);
+  line-height: 1.35;
+  margin: 0;
+  letter-spacing: .04em;
+}
+.nw { white-space: nowrap; display: inline-block; }
+.hero h1 .accent { color: var(--red); }
+.hero .lead { margin: 18px 0 0; color: var(--ink-soft); font-size: 17px; }
+.hero .copyright {
+  margin-top: 20px; display: inline-flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  font-size: 14px; color: var(--ink-soft);
+  border-top: 1px dashed rgba(120, 90, 50, .3); padding-top: 14px;
+}
+.hero .cta { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; }
+.btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 22px; border-radius: 999px; border: 0; cursor: pointer;
+  font: 600 16px var(--sans); text-decoration: none;
+  transition: transform .2s, box-shadow .2s, background .2s;
+}
+.btn-primary { background: var(--red); color: #fff; box-shadow: 0 6px 16px rgba(192, 57, 43, .3); }
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 10px 22px rgba(192, 57, 43, .35); }
+.btn-ghost { background: transparent; color: var(--ink); border: 1.5px solid var(--ink); }
+.btn-ghost:hover { background: var(--ink); color: var(--paper); }
+
+.hero-art { position: relative; }
+.hero-art svg { width: 100%; height: auto; display: block; filter: drop-shadow(0 12px 20px rgba(72,52,30,.12)); }
+
+/* ---------- 工具原理 ---------- */
+.concept-grid { display: grid; grid-template-columns: minmax(0,1fr) auto minmax(0,1fr); gap: 26px; align-items: stretch; }
+.tool-card { padding: 28px; display: flex; flex-direction: column; gap: 12px; transition: transform .3s; }
+.tool-card:hover { transform: translateY(-6px) rotate(-.4deg); }
+.tool-card .chip { align-self: flex-start; }
+.tool-card .art { height: 190px; display: grid; place-items: center; }
+.tool-card .art svg { height: 100%; width: auto; }
+.tool-card h3 { font-family: var(--serif); font-size: 22px; margin: 4px 0 0; }
+.tool-card .file { font-family: var(--mono); font-size: 13px; color: var(--ink-faint); }
+.tool-card p { margin: 0; color: var(--ink-soft); }
+.tool-card ul { margin: 4px 0 0; padding-left: 20px; color: var(--ink-soft); }
+.concept-arrow { display: grid; place-items: center; }
+.concept-arrow svg { width: 90px; }
+.concept-arrow .flow-dash { stroke-dasharray: 6 8; animation: dash 1.2s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -28; } }
+
+.flow-strip {
+  margin-top: 46px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px;
+  font-family: var(--serif);
+}
+.flow-strip .node {
+  padding: 10px 18px; border-radius: 10px; background: #fffaf0; border: 1.5px solid var(--ink);
+  box-shadow: 3px 3px 0 var(--ink); font-weight: 700; font-size: 15px;
+}
+.flow-strip .node.hl { background: var(--red); color: #fff; border-color: var(--red); box-shadow: 3px 3px 0 #7d241b; }
+.flow-strip .arrow { color: var(--red); font-size: 22px; animation: nudge 1.6s ease-in-out infinite; }
+@keyframes nudge { 50% { transform: translateX(5px); } }
+.tagline { text-align: center; margin-top: 28px; font-family: var(--serif); font-size: 20px; }
+.tagline b { color: var(--red); }
+
+/* ---------- 事前準備 ---------- */
+.prep-layout { display: grid; grid-template-columns: minmax(0,1.2fr) minmax(0,.8fr); gap: 32px; align-items: start; }
+.checklist { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.checklist li { display: grid; grid-template-columns: 44px minmax(0,1fr); gap: 14px; padding: 18px 20px; align-items: start; }
+.checklist .tick {
+  width: 36px; height: 36px; border-radius: 50%; border: 2px solid var(--teal);
+  display: grid; place-items: center; color: var(--teal); background: #fff;
+}
+.checklist .tick svg { width: 20px; height: 20px; }
+.checklist .tick path { stroke-dasharray: 30; stroke-dashoffset: 30; transition: stroke-dashoffset .6s ease .3s; }
+.checklist li.in .tick path { stroke-dashoffset: 0; }
+.checklist h4 { margin: 0; font-size: 17px; }
+.checklist p { margin: 4px 0 0; color: var(--ink-soft); font-size: 15px; }
+.checklist .important { border: 2px solid var(--red); }
+.checklist .important .tick { border-color: var(--red); color: var(--red); }
+.steps-mini { margin: 8px 0 0; padding-left: 20px; color: var(--ink-soft); font-size: 15px; }
+
+.warn {
+  padding: 22px 24px; border-radius: 14px; position: relative;
+  background: repeating-linear-gradient(135deg, #fbefe9, #fbefe9 12px, #f8e6de 12px, #f8e6de 24px);
+  border: 2px dashed var(--red);
+}
+.warn h4 { margin: 0 0 6px; color: var(--red); font-family: var(--serif); font-size: 18px; display: flex; gap: 8px; align-items: center; }
+.warn p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+.prep-side { display: grid; gap: 18px; position: sticky; top: 80px; }
+.prep-side .art { padding: 18px; display: grid; place-items: center; }
+
+/* ---------- 三大步驟 ---------- */
+.steps-section { overflow: hidden; }
+.road-wrap { position: relative; }
+.road {
+  position: absolute; left: 50%; top: 0; height: 100%; width: 260px; transform: translateX(-50%);
+  pointer-events: none; z-index: 0;
+}
+.road path.base { stroke: var(--paper-3); }
+.road path.draw { stroke: var(--red); stroke-linecap: round; }
+.step-row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 80px; align-items: center; margin-bottom: 70px; position: relative; z-index: 1; }
+.step-row:last-child { margin-bottom: 0; }
+.step-row.flip .step-card { order: 2; }
+.step-row.flip .step-art { order: 1; }
+.step-card { padding: 30px; }
+.step-card .head { display: flex; align-items: center; gap: 18px; margin-bottom: 12px; }
+.step-card .step-no { font-size: 13px; letter-spacing: .3em; color: var(--ink-faint); }
+.step-card h3 { margin: 0; font-family: var(--serif); font-size: 24px; line-height: 1.4; }
+.step-card p { margin: 0; color: var(--ink-soft); }
+.step-card .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
+.step-art { display: grid; place-items: center; }
+.step-art svg { width: min(360px, 100%); height: auto; }
+
+/* ---------- 細節 ---------- */
+.detail-block { margin-bottom: 64px; }
+.detail-block:last-child { margin-bottom: 0; }
+.detail-title { display: flex; align-items: center; gap: 16px; margin-bottom: 24px; }
+.detail-title h3 { margin: 0; font-family: var(--serif); font-size: 26px; }
+.detail-title .line { flex: 1; height: 2px; background: linear-gradient(90deg, var(--ink) 0%, transparent 100%); opacity: .25; }
+
+.grid-2 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 22px; }
+.grid-3 { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+.grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 14px; }
+.stack { display: grid; gap: 22px; align-content: start; grid-template-columns: minmax(0,1fr); }
+.checklist { grid-template-columns: minmax(0,1fr); }
+.grid-2 > *, .grid-3 > *, .grid-4 > *, .prep-layout > *, .concept-grid > *, .step-row > * { min-width: 0; }
+
+.mini-card { padding: 18px 20px; }
+.mini-card h4 { margin: 0 0 4px; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+.mini-card p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+.fake-btn {
+  display: inline-block; padding: 3px 12px; border-radius: 999px; font-size: 13px; font-weight: 700;
+  background: #007aff; color: #fff;
+}
+.fake-btn.gray { background: #e5e5ea; color: #1c1c1e; }
+.fake-btn.danger { background: #ff3b30; }
+.fake-btn.link { background: transparent; color: #007aff; padding: 3px 4px; }
+
+.field-table { padding: 8px 6px; }
+.field-row { display: grid; grid-template-columns: 170px minmax(0,1fr); gap: 12px; padding: 12px 16px; border-bottom: 1px dashed rgba(120, 90, 50, .2); align-items: baseline; }
+.field-row:last-child { border-bottom: 0; }
+.field-row b { font-family: var(--serif); }
+.field-row span { color: var(--ink-soft); font-size: 15px; }
+
+.rule-box {
+  margin-top: 22px; padding: 26px 28px; display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 24px; align-items: center;
+  background: linear-gradient(135deg, #fff5e8, #fbe9d4);
+  border: 2px solid var(--gold);
+}
+.rule-box .cal { width: 96px; }
+.rule-box h4 { margin: 0; font-family: var(--serif); font-size: 21px; }
+.rule-box p { margin: 6px 0 0; color: var(--ink-soft); }
+.rule-box .msg { margin-top: 10px; display: inline-block; padding: 6px 12px; background: #fff; border-left: 4px solid var(--red); font-size: 14.5px; }
+.earliest { text-align: center; padding: 14px 20px; background: #fff; border-radius: 12px; border: 1.5px solid var(--ink); box-shadow: 4px 4px 0 var(--ink); }
+.earliest small { display: block; color: var(--ink-faint); font-size: 13px; }
+.earliest strong { display: block; font-family: var(--mono); font-size: 28px; color: var(--red); letter-spacing: .05em; }
+.earliest span { font-size: 13px; color: var(--ink-soft); }
+
+.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.timeline::before { content: ""; position: absolute; left: 17px; top: 8px; bottom: 8px; width: 2px; background: repeating-linear-gradient(180deg, var(--ink-faint) 0 6px, transparent 6px 12px); }
+.timeline li { position: relative; padding: 0 0 18px 52px; }
+.timeline li:last-child { padding-bottom: 0; }
+.timeline .dot {
+  position: absolute; left: 0; top: 0; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--paper); border: 2px solid var(--ink); display: grid; place-items: center;
+  font-family: var(--serif); font-weight: 700; font-size: 15px;
+}
+.timeline li.hot .dot { background: var(--red); border-color: var(--red); color: #fff; }
+.timeline h4 { margin: 4px 0 2px; font-size: 16px; }
+.timeline p { margin: 0; color: var(--ink-soft); font-size: 14.5px; }
+
+.tabs { padding: 22px; }
+.tab-bar { display: inline-flex; padding: 4px; background: rgba(120, 90, 50, .1); border-radius: 999px; margin-bottom: 14px; }
+.tab-bar button {
+  border: 0; background: transparent; padding: 7px 18px; border-radius: 999px; cursor: pointer;
+  font: 600 14px var(--sans); color: var(--ink-soft); transition: background .25s, color .25s;
+}
+.tab-bar button[aria-selected="true"] { background: var(--ink); color: var(--paper); }
+.path-box {
+  display: flex; align-items: center; gap: 10px; background: #2b2622; color: #f6efe2; border-radius: 10px; padding: 12px 14px;
+  font-family: var(--mono); font-size: 14px;
+}
+.path-box code { background: none; border: 0; color: inherit; flex: 1; overflow-x: auto; white-space: nowrap; padding: 0; }
+.copy-btn {
+  border: 1px solid rgba(246,239,226,.4); background: transparent; color: #f6efe2; border-radius: 6px; padding: 4px 10px;
+  cursor: pointer; font: 600 13px var(--sans); flex: none; transition: background .2s;
+}
+.copy-btn:hover { background: rgba(246,239,226,.15); }
+.copy-btn.done { background: var(--green); border-color: var(--green); }
+.tip { margin-top: 12px; font-size: 14px; color: var(--ink-soft); }
+
+.log-panel { overflow: hidden; border-radius: 10px; border: 1px solid #888; background: #fff; font-size: 13.5px; box-shadow: var(--shadow); }
+.log-panel .bar { background: #2a5599; color: #fff; padding: 7px 12px; display: flex; align-items: center; gap: 8px; font-weight: 700; }
+.log-panel .bar span { flex: 1; }
+.log-panel .bar i { font-style: normal; border: 1px solid #fff; border-radius: 4px; padding: 0 6px; font-size: 11px; font-weight: 400; }
+.log-panel .status { padding: 7px 12px; border-bottom: 1px solid #ddd; font-weight: 700; color: #2a5599; min-height: 37px; }
+.log-panel .rows { padding: 4px 12px 10px; min-height: 176px; }
+.log-row { padding: 4px 0; border-bottom: 1px dashed #eee; opacity: 0; transform: translateX(-8px); transition: opacity .4s, transform .4s; }
+.log-row.show { opacity: 1; transform: none; }
+.log-row.ok { color: #1a7f37; }
+.log-row.ng { color: #c62828; }
+.log-row small { display: block; padding-left: 12px; }
+.log-copy { margin-top: 8px; display: inline-block; background: #2a5599; color: #fff; border-radius: 4px; padding: 2px 10px; font-size: 12.5px; opacity: 0; transition: opacity .4s; }
+.log-copy.show { opacity: 1; }
+
+/* ---------- FAQ ---------- */
+.faq { display: grid; gap: 14px; max-width: 860px; margin: 0 auto; }
+.faq details { padding: 0; overflow: hidden; }
+.faq summary {
+  list-style: none; cursor: pointer; padding: 18px 56px 18px 22px; font-weight: 700; font-size: 16.5px; position: relative;
+  display: flex; gap: 12px; align-items: center;
+}
+.faq summary::-webkit-details-marker { display: none; }
+.faq summary .q { font-family: var(--serif); color: var(--red); font-size: 20px; }
+.faq summary::after {
+  content: ""; position: absolute; right: 22px; top: 50%; width: 12px; height: 12px; margin-top: -8px;
+  border-right: 2px solid var(--ink); border-bottom: 2px solid var(--ink); transform: rotate(45deg); transition: transform .3s;
+}
+.faq details[open] summary::after { transform: rotate(-135deg); margin-top: -2px; }
+.faq .answer { padding: 0 22px 20px 54px; color: var(--ink-soft); animation: drop .35s ease; }
+.faq .answer p { margin: 0 0 10px; }
+.faq .answer p:last-child { margin-bottom: 0; }
+.faq .answer ul, .faq .answer ol { margin: 0; padding-left: 22px; display: grid; gap: 8px; }
+.faq .answer b { color: var(--ink); }
+.faq .principles li::marker { color: var(--red); font-weight: 700; font-family: var(--serif); }
+.faq-group {
+  margin: 18px 0 2px; font-family: var(--serif); font-size: 20px; display: flex; align-items: center; gap: 12px;
+}
+.faq-group:first-child { margin-top: 0; }
+.faq-group::before { content: ""; width: 10px; height: 10px; background: var(--red); transform: rotate(45deg); }
+.faq-group::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(43,38,34,.3), transparent); }
+
+/* ---------- 導覽重點按鈕 ---------- */
+.topnav nav a.nav-hl { color: var(--red); border: 1.5px solid var(--red); padding: 4px 12px; }
+.topnav nav a.nav-hl:hover, .topnav nav a.nav-hl.active { background: var(--red); color: #fff; }
+
+/* ---------- 教學影片 ---------- */
+.video-frame {
+  max-width: 900px; margin: 0 auto; padding: 14px; border-radius: 18px;
+  background: linear-gradient(180deg, #5e3b1e, #3e2612);
+  box-shadow: var(--shadow), inset 0 0 0 2px rgba(255,255,255,.08);
+}
+.video-ratio { position: relative; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden; background: #000; }
+.video-ratio iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-alt { text-align: center; margin: 16px 0 0; font-size: 14px; color: var(--ink-soft); }
+
+/* ---------- 檔案下載 ---------- */
+.dl-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 22px; }
+.dl-card { padding: 30px 24px 26px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; transition: transform .3s; }
+.dl-card:hover { transform: translateY(-6px); }
+.dl-card:hover .dl-icon { animation: bob .8s ease-in-out infinite; }
+@keyframes bob { 50% { transform: translateY(-6px) rotate(-4deg); } }
+.dl-no {
+  position: absolute; top: 14px; left: 14px; width: 34px; height: 34px; display: grid; place-items: center;
+  border: 2px solid var(--red); color: var(--red); border-radius: 4px; font-family: var(--serif); font-weight: 700; transform: rotate(-6deg);
+}
+.dl-icon { width: 72px; height: 72px; }
+.dl-card h3 { margin: 4px 0 0; font-family: var(--serif); font-size: 19px; }
+.dl-card p { margin: 0; color: var(--ink-soft); font-size: 14.5px; flex: 1; }
+.dl-btn { margin-top: 8px; }
+
+/* ---------- 方案理念 ---------- */
+.vision { padding: 8px 0 24px; }
+.vision-card {
+  padding: 36px 40px 30px 40px; overflow: hidden;
+  background: linear-gradient(135deg, #fffaf0 0%, #f7ead2 100%);
+  border-left: 6px solid var(--red);
+}
+.vision-card::after {
+  content: "和"; position: absolute; right: 24px; bottom: -40px; font-family: var(--serif); font-size: 200px;
+  color: rgba(192, 57, 43, .06); line-height: 1; pointer-events: none;
+}
+.vision-seal {
+  position: absolute; top: 18px; right: 22px; padding: 6px 8px; writing-mode: vertical-rl;
+  border: 2px solid var(--red); color: var(--red); border-radius: 4px; font-family: var(--serif); font-weight: 700;
+  letter-spacing: .2em; transform: rotate(4deg); background: rgba(192, 57, 43, .05);
+}
+.vision-text { margin: 0; padding-right: 72px; font-family: var(--serif); font-size: clamp(17px, 1.9vw, 20px); line-height: 2; position: relative; z-index: 1; }
+.vision-text b { color: var(--red); background: linear-gradient(transparent 62%, rgba(244, 191, 204, .6) 62%); }
+.vision-points { list-style: none; margin: 22px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 10px; position: relative; z-index: 1; }
+.vision-points li {
+  display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 999px;
+  background: #fff; border: 1.5px solid var(--ink); box-shadow: 2px 2px 0 var(--ink); font-size: 14.5px; font-weight: 600;
+  transition: transform .2s, box-shadow .2s;
+}
+.vision-points li:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--ink); }
+@keyframes drop { from { opacity: 0; transform: translateY(-6px); } }
+
+/* ---------- 總結 ---------- */
+.summary { text-align: center; }
+.summary-steps { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 22px; margin-top: 10px; counter-reset: s; }
+.summary-steps .card { padding: 30px 22px 24px; }
+.summary-steps .big { font-family: var(--serif); font-size: 64px; line-height: 1; color: transparent; -webkit-text-stroke: 1.5px var(--red); }
+.summary-steps h4 { margin: 10px 0 6px; font-family: var(--serif); font-size: 19px; }
+.summary-steps p { margin: 0; color: var(--ink-soft); font-size: 15px; }
+
+footer { padding: 60px 0 40px; text-align: center; color: var(--ink-soft); font-size: 14px; position: relative; }
+footer .landscape { width: 100%; height: auto; display: block; margin-bottom: 18px; opacity: .9; }
+footer .sig { font-family: var(--serif); font-size: 16px; color: var(--ink); }
+
+#toTop {
+  position: fixed; right: 22px; bottom: 22px; z-index: 45; width: 50px; height: 50px; border-radius: 50%;
+  border: 2px solid var(--red); background: var(--paper); color: var(--red); cursor: pointer;
+  font: 700 15px var(--serif); box-shadow: var(--shadow);
+  opacity: 0; transform: translateY(20px) scale(.8); transition: opacity .3s, transform .3s; pointer-events: none;
+}
+#toTop.show { opacity: 1; transform: none; pointer-events: auto; }
+#toTop:hover { background: var(--red); color: #fff; }
+
+/* ---------- 插畫動態 ---------- */
+.float { animation: float 4s ease-in-out infinite; }
+.float.slow { animation-duration: 6s; }
+@keyframes float { 50% { transform: translateY(-8px); } }
+.blink { transform-box: fill-box; transform-origin: center; animation: blink 4s infinite; }
+@keyframes blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(.1); } }
+.antenna { animation: glow 1.4s ease-in-out infinite; }
+@keyframes glow { 50% { fill: #ffd54a; filter: drop-shadow(0 0 4px #ffd54a); } }
+.pulse { transform-box: fill-box; transform-origin: center; animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 50% { transform: scale(1.12); } }
+.ring { transform-box: fill-box; transform-origin: center; animation: ring 1.8s ease-out infinite; }
+@keyframes ring { from { transform: scale(1); opacity: .6; } to { transform: scale(1.8); opacity: 0; } }
+.sway { transform-box: fill-box; transform-origin: 0% 0%; animation: sway 6s ease-in-out infinite; }
+@keyframes sway { 50% { transform: rotate(2.5deg); } }
+.drift { animation: drift 18s linear infinite; }
+@keyframes drift { from { transform: translateX(-30px); } to { transform: translateX(30px); } }
+.arm-wave { transform-box: fill-box; transform-origin: 50% 0%; animation: wave 2.2s ease-in-out infinite; }
+@keyframes wave { 50% { transform: rotate(-18deg); } }
+.write { transform-box: fill-box; transform-origin: 80% 100%; animation: write 1.4s ease-in-out infinite; }
+@keyframes write { 50% { transform: translate(-10px, 2px) rotate(-6deg); } }
+.type-line { stroke-dasharray: 60; stroke-dashoffset: 60; animation: typeline 3s ease-in-out infinite; }
+.type-line.l2 { animation-delay: .4s; }
+.type-line.l3 { animation-delay: .8s; }
+@keyframes typeline { 40%, 80% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.pop { transform-box: fill-box; transform-origin: center; animation: pop 3s ease-in-out infinite; }
+.pop.p2 { animation-delay: .5s; }
+.pop.p3 { animation-delay: 1s; }
+@keyframes pop { 0%, 10% { transform: scale(0); } 25%, 85% { transform: scale(1); } 100% { transform: scale(0); } }
+.sun { animation: sunGlow 5s ease-in-out infinite; }
+@keyframes sunGlow { 50% { opacity: .75; } }
+
+/* ---------- RWD ---------- */
+@media (max-width: 960px) {
+  .grid-4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .prep-layout { grid-template-columns: minmax(0,1fr); }
+  .prep-side { position: static; grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+}
+@media (max-width: 768px) {
+  section { padding: 64px 0; }
+  .section-head h2 { font-size: 25px; letter-spacing: .04em; }
+  .vision-card { padding: 26px 20px 22px; }
+  .dl-grid { grid-template-columns: minmax(0,1fr); }
+  .video-frame { padding: 8px; border-radius: 12px; }
+  .vision-text { padding-right: 36px; }
+  .faq .answer { padding: 0 18px 18px 22px; }
+  .hero .wrap { grid-template-columns: minmax(0,1fr); }
+  .hero-art { order: -1; max-width: 460px; margin: 0 auto; }
+  .scroll-banner { padding: 14px 4px; }
+  .scroll-paper { padding: 22px 18px; }
+  .concept-grid { grid-template-columns: minmax(0,1fr); }
+  .concept-arrow svg { transform: rotate(90deg); width: 64px; }
+  .road { display: none; }
+  .step-row, .step-row.flip { grid-template-columns: minmax(0,1fr); gap: 18px; margin-bottom: 44px; }
+  .step-row.flip .step-card, .step-row .step-card { order: 2; }
+  .step-row.flip .step-art, .step-row .step-art { order: 1; }
+  .step-art svg { width: min(280px, 80%); }
+  .grid-2, .grid-3, .summary-steps { grid-template-columns: minmax(0,1fr); }
+  .grid-4 { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .prep-side { grid-template-columns: minmax(0,1fr); }
+  .field-row { grid-template-columns: minmax(0,1fr); gap: 2px; }
+  .rule-box { grid-template-columns: minmax(0,1fr); text-align: center; justify-items: center; }
+  .topnav .brand span.full { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  .reveal { opacity: 1; transform: none; }
+  html { scroll-behavior: auto; }
+}
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<canvas id="petals" aria-hidden="true"></canvas>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="brush" viewBox="0 0 180 14">
+      <path d="M4 9 C 40 2, 80 12, 120 6 S 170 5, 176 7" fill="none" stroke="#c0392b" stroke-width="4" stroke-linecap="round" opacity=".85"/>
+      <path d="M20 11 C 60 7, 100 12, 150 9" fill="none" stroke="#c0392b" stroke-width="1.5" stroke-linecap="round" opacity=".4"/>
+    </symbol>
+    <symbol id="blossom" viewBox="-10 -10 20 20">
+      <g fill="#f4bfcc" stroke="#e58fa6" stroke-width=".6">
+        <ellipse cx="0" cy="-5" rx="3.2" ry="4.6"/>
+        <ellipse cx="0" cy="-5" rx="3.2" ry="4.6" transform="rotate(72)"/>
+        <ellipse cx="0" cy="-5" rx="3.2" ry="4.6" transform="rotate(144)"/>
+        <ellipse cx="0" cy="-5" rx="3.2" ry="4.6" transform="rotate(216)"/>
+        <ellipse cx="0" cy="-5" rx="3.2" ry="4.6" transform="rotate(288)"/>
+      </g>
+      <circle r="1.8" fill="#c9a227"/>
+    </symbol>
+    <symbol id="check" viewBox="0 0 24 24">
+      <path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="topnav">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="mini-stamp">租</span><span class="full">社宅場地批量租借</span></a>
+    <nav aria-label="頁面導覽">
+      <a href="#video" class="nav-hl">▶ 完整教學影片</a>
+      <a href="#download" class="nav-hl">⬇ 檔案下載</a>
+      <a href="#concept">工具原理</a>
+      <a href="#prep">事前準備</a>
+      <a href="#steps">三大步驟</a>
+      <a href="#step1">填寫資料</a>
+      <a href="#step2">自動申請</a>
+      <a href="#faq">常見問題</a>
+    </nav>
+  </div>
+</header>
+
+<!-- ===== 主視覺 ===== -->
+<section class="hero" id="top">
+  <div class="wrap">
+    <div class="scroll-banner">
+      <div class="scroll-paper">
+        <h1><span class="nw">社宅場地</span><span class="nw">批量租借</span><br><span class="nw"><span class="accent">自動化申請</span></span><span class="nw">全攻略</span></h1>
+        <p class="lead">利用「HTML 填單工具」與「Automa 機器人」，一次填好十幾二十筆租借資料，交給機器人自動送出申請，大幅節省手動填單時間。</p>
+        <div class="cta">
+          <a class="btn btn-primary" href="#steps">看三大步驟 ↓</a>
+          <a class="btn btn-ghost" href="#prep">事前準備</a>
+        </div>
+        <div class="copyright">
+          <span class="chip red">作者</span>
+          <span>本程式由 興隆A Samuel 撰寫及維護　若有問題可加LINE：henrychiou</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-art" aria-hidden="true">
+      <svg viewBox="0 0 520 440">
+        <defs>
+          <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#fbf3e3"/>
+            <stop offset="1" stop-color="#f1e1c4"/>
+          </linearGradient>
+          <linearGradient id="mt" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#5f8fa0"/>
+            <stop offset="1" stop-color="#9dbcc0"/>
+          </linearGradient>
+          <clipPath id="heroClip"><rect x="10" y="10" width="500" height="420" rx="28"/></clipPath>
+        </defs>
+        <g clip-path="url(#heroClip)">
+          <rect x="10" y="10" width="500" height="420" fill="url(#sky)"/>
+          <circle class="sun" cx="370" cy="120" r="54" fill="#e2725b" opacity=".9"/>
+          <g class="drift" fill="none" stroke="#c9b28c" stroke-width="3" stroke-linecap="round" opacity=".7">
+            <path d="M60 110 q20 -14 40 0 t40 0"/>
+            <path d="M300 70 q16 -10 32 0 t32 0 t32 0"/>
+          </g>
+          <path d="M40 330 L210 150 Q230 132 250 150 L430 330 Z" fill="url(#mt)"/>
+          <path d="M184 178 L210 150 Q230 132 250 150 L276 178 L262 172 L248 186 L232 170 L218 186 L204 172 Z" fill="#fbf6ec"/>
+          <path d="M260 330 L380 220 L500 330 Z" fill="#7aa0a6" opacity=".7"/>
+          <g class="drift" style="animation-duration:24s" fill="#fbf6ec" opacity=".85">
+            <ellipse cx="120" cy="260" rx="70" ry="10"/>
+            <ellipse cx="400" cy="250" rx="60" ry="8"/>
+          </g>
+          <rect x="10" y="320" width="500" height="110" fill="#d9c49d"/>
+          <path d="M10 330 Q 140 300 260 330 T 510 322 L510 430 L10 430 Z" fill="#cdb48a"/>
+          <!-- 日式屋舍 -->
+          <g transform="translate(300 250)">
+            <rect x="18" y="52" width="120" height="58" fill="#f6ecd9" stroke="#3b2f27" stroke-width="2"/>
+            <path d="M-6 56 L78 18 L162 56 Z" fill="#3b2f27"/>
+            <path d="M-12 58 Q 78 40 168 58" fill="none" stroke="#3b2f27" stroke-width="5" stroke-linecap="round"/>
+            <path d="M14 24 L78 0 L142 24 Z" fill="#4a3c33"/>
+            <rect x="34" y="64" width="22" height="30" fill="#e8d7b6" stroke="#3b2f27" stroke-width="1.5"/>
+            <rect x="66" y="64" width="22" height="30" fill="#e8d7b6" stroke="#3b2f27" stroke-width="1.5"/>
+            <rect x="98" y="64" width="22" height="46" fill="#7b4b2a" stroke="#3b2f27" stroke-width="1.5"/>
+            <path d="M45 64 v30 M77 64 v30 M34 79 h22 M66 79 h22" stroke="#3b2f27" stroke-width="1"/>
+          </g>
+          <!-- 文件堆 + 機器人 -->
+          <g transform="translate(70 230)"><g class="float">
+            <g transform="rotate(-8)">
+              <rect x="0" y="0" width="80" height="100" rx="6" fill="#fffaf0" stroke="#3b2f27" stroke-width="2"/>
+              <text x="40" y="30" text-anchor="middle" font-size="18" font-weight="700" fill="#c0392b" font-family="monospace">CSV</text>
+              <path d="M14 48 h52 M14 62 h52 M14 76 h36" stroke="#8d8174" stroke-width="3" stroke-linecap="round"/>
+            </g>
+          </g></g>
+          <g transform="translate(170 250)">
+            <rect x="36" y="-16" width="4" height="16" fill="#3b2f27"/>
+            <circle class="antenna" cx="38" cy="-20" r="6" fill="#c0392b"/>
+            <rect x="0" y="0" width="76" height="58" rx="16" fill="#e8eef0" stroke="#3b2f27" stroke-width="2.5"/>
+            <rect x="10" y="12" width="56" height="30" rx="10" fill="#2b3a42"/>
+            <g class="blink"><circle cx="26" cy="27" r="6" fill="#7fe0d5"/><circle cx="50" cy="27" r="6" fill="#7fe0d5"/></g>
+            <rect x="6" y="62" width="64" height="48" rx="12" fill="#e8eef0" stroke="#3b2f27" stroke-width="2.5"/>
+            <circle cx="38" cy="84" r="9" fill="#c0392b" opacity=".85"/>
+            <rect class="arm-wave" x="70" y="66" width="12" height="34" rx="6" fill="#e8eef0" stroke="#3b2f27" stroke-width="2.5"/>
+            <rect x="-6" y="66" width="12" height="34" rx="6" fill="#e8eef0" stroke="#3b2f27" stroke-width="2.5"/>
+          </g>
+        </g>
+        <!-- 櫻花枝 -->
+        <g class="sway">
+          <path d="M0 20 C 60 40, 110 50, 170 90 M70 44 C 90 70, 100 86, 96 110 M130 66 C 150 50, 180 44, 210 46" fill="none" stroke="#5b3a29" stroke-width="5" stroke-linecap="round"/>
+          <use href="#blossom" x="150" y="70" width="26" height="26"/>
+          <use href="#blossom" x="170" y="88" width="20" height="20"/>
+          <use href="#blossom" x="86" y="100" width="24" height="24"/>
+          <use href="#blossom" x="60" y="34" width="22" height="22"/>
+          <use href="#blossom" x="196" y="34" width="24" height="24"/>
+          <use href="#blossom" x="112" y="50" width="18" height="18"/>
+          <use href="#blossom" x="20" y="18" width="20" height="20"/>
+        </g>
+        <rect x="10" y="10" width="500" height="420" rx="28" fill="none" stroke="#3b2f27" stroke-width="3"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 方案理念 ===== -->
+<section class="vision" id="vision">
+  <div class="wrap">
+    <div class="vision-card card reveal">
+      <span class="vision-seal" aria-hidden="true">理念</span>
+      <p class="vision-text">本方案採用<b>瀏覽器外掛自動填單</b>，保留既有 Google 表單作業習慣，並使用<b>個人社宅雲帳號</b>，避免共用帳密及責任不清。即使系統更新或人員異動，也可<b>自行修改腳本或透過 AI 協助維護</b>，降低對原開發者的依賴與後續維護負擔。</p>
+      <ul class="vision-points">
+        <li><span>📝</span>保留 Google 表單習慣</li>
+        <li><span>🔐</span>個人帳號・責任清楚</li>
+        <li><span>🤖</span>可自行或 AI 協助維護</li>
+        <li><span>🔁</span>人員異動也能接手</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 教學影片 ===== -->
+<section id="video" class="video-section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">VIDEO</span>
+      <h2>完整教學影片</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+      <p>從填寫資料到機器人自動送出，跟著影片一步一步操作。</p>
+    </div>
+    <div class="video-frame reveal">
+      <div class="video-ratio">
+        <iframe src="https://www.youtube.com/embed/95_fh5pc8Hg?si=GRbTOvJrV9971iu2" title="社宅場地批量租借 完整教學影片" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen loading="lazy"></iframe>
+      </div>
+    </div>
+    <p class="video-alt reveal">影片無法播放？<a href="https://www.youtube.com/watch?v=95_fh5pc8Hg" target="_blank" rel="noopener">到 YouTube 觀看 ↗</a></p>
+  </div>
+</section>
+
+<!-- ===== 工具原理 ===== -->
+<section id="concept">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">PRINCIPLE</span>
+      <h2>工具原理</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+      <p>在「社宅雲」租借公共空間，每一筆都要登入、找場地、同意規約、填一整張表單再送出。十幾二十筆手動填，既耗時又容易填錯。這套工具把工作拆成兩步。</p>
+    </div>
+
+    <div class="concept-grid">
+      <article class="card tool-card reveal d1">
+        <div class="art" aria-hidden="true">
+          <svg viewBox="0 0 240 190">
+            <ellipse cx="120" cy="176" rx="100" ry="8" fill="#000" opacity=".08"/>
+            <rect x="20" y="110" width="200" height="14" rx="4" fill="#8a5a32"/>
+            <rect x="34" y="124" width="10" height="50" fill="#6b4425"/>
+            <rect x="196" y="124" width="10" height="50" fill="#6b4425"/>
+            <g class="float slow">
+              <rect x="40" y="50" width="70" height="60" rx="4" fill="#fffaf0" stroke="#3b2f27" stroke-width="2" transform="rotate(-6 75 80)"/>
+              <rect x="48" y="44" width="70" height="62" rx="4" fill="#fffaf0" stroke="#3b2f27" stroke-width="2"/>
+              <path class="type-line" d="M58 62 h50" stroke="#c0392b" stroke-width="3" stroke-linecap="round"/>
+              <path class="type-line l2" d="M58 76 h50" stroke="#8d8174" stroke-width="3" stroke-linecap="round"/>
+              <path class="type-line l3" d="M58 90 h34" stroke="#8d8174" stroke-width="3" stroke-linecap="round"/>
+            </g>
+            <rect x="130" y="40" width="80" height="58" rx="6" fill="#2b3a42" stroke="#3b2f27" stroke-width="2"/>
+            <rect x="136" y="46" width="68" height="40" rx="3" fill="#f6efe2"/>
+            <path d="M140 54 h60 M140 62 h60 M140 70 h60 M140 78 h60" stroke="#cdb48a" stroke-width="1.5"/>
+            <path d="M160 46 v40 M180 46 v40" stroke="#cdb48a" stroke-width="1.5"/>
+            <rect x="160" y="98" width="20" height="12" fill="#3b2f27"/>
+            <g class="write">
+              <path d="M104 106 L126 70" stroke="#3b2f27" stroke-width="5" stroke-linecap="round"/>
+              <path d="M104 106 L100 112" stroke="#2b2622" stroke-width="4" stroke-linecap="round"/>
+            </g>
+          </svg>
+        </div>
+        <span class="chip">填單小幫手</span>
+        <h3>HTML 填單工具</h3>
+        <span class="file">場地租借CSV編輯.html</span>
+        <p>在一個表格裡把要租的場地、日期、時段等資料一次填好，並幫你檢查有沒有填錯，最後存成 CSV 檔。</p>
+        <ul>
+          <li>雙擊即可開啟，不用安裝、不用連網</li>
+          <li>自動檢查日期、信箱格式</li>
+          <li>資料自動保存在瀏覽器</li>
+        </ul>
+      </article>
+
+      <div class="concept-arrow reveal d2" aria-hidden="true">
+        <svg viewBox="0 0 90 60">
+          <path class="flow-dash" d="M6 30 H 70" stroke="#c0392b" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M64 18 L84 30 L64 42" fill="none" stroke="#c0392b" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+          <text x="40" y="16" text-anchor="middle" font-size="11" fill="#5d5249">CSV</text>
+        </svg>
+      </div>
+
+      <article class="card tool-card reveal d3">
+        <div class="art" aria-hidden="true">
+          <svg viewBox="0 0 240 190">
+            <ellipse cx="120" cy="178" rx="70" ry="8" fill="#000" opacity=".08"/>
+            <g class="float">
+              <rect x="117" y="14" width="6" height="20" fill="#3b2f27"/>
+              <circle class="antenna" cx="120" cy="12" r="8" fill="#c0392b"/>
+              <rect x="70" y="32" width="100" height="74" rx="22" fill="#e8eef0" stroke="#3b2f27" stroke-width="3"/>
+              <rect x="84" y="48" width="72" height="40" rx="14" fill="#2b3a42"/>
+              <g class="blink"><circle cx="104" cy="68" r="8" fill="#7fe0d5"/><circle cx="136" cy="68" r="8" fill="#7fe0d5"/></g>
+              <rect x="80" y="112" width="80" height="56" rx="16" fill="#e8eef0" stroke="#3b2f27" stroke-width="3"/>
+              <rect x="96" y="124" width="48" height="24" rx="6" fill="#fffaf0" stroke="#3b2f27" stroke-width="2"/>
+              <path d="M102 132 h36 M102 140 h24" stroke="#c0392b" stroke-width="2.5" stroke-linecap="round"/>
+              <rect class="arm-wave" x="160" y="116" width="16" height="40" rx="8" fill="#e8eef0" stroke="#3b2f27" stroke-width="3"/>
+              <rect x="64" y="116" width="16" height="40" rx="8" fill="#e8eef0" stroke="#3b2f27" stroke-width="3"/>
+            </g>
+            <use class="pop" href="#check" x="184" y="40" width="30" height="30" style="color:#3f8f5a"/>
+            <use class="pop p2" href="#check" x="24" y="60" width="26" height="26" style="color:#3f8f5a"/>
+          </svg>
+        </div>
+        <span class="chip red">自動申請機器人</span>
+        <h3>Automa 機器人</h3>
+        <span class="file">社宅場地租借.automa.json</span>
+        <p>讀取剛剛存好的 CSV 檔，自動登入社宅雲，一筆一筆幫你填表、送出申請，最後告訴你哪幾筆成功、哪幾筆失敗。</p>
+        <ul>
+          <li>自動登入台北通</li>
+          <li>逐筆填表並送出</li>
+          <li>產出成功／失敗清單</li>
+        </ul>
+      </article>
+    </div>
+
+    <div class="flow-strip reveal">
+      <span class="node">打開 HTML 填寫資料</span><span class="arrow">➜</span>
+      <span class="node">匯出 CSV 檔</span><span class="arrow">➜</span>
+      <span class="node hl">在 Automa 執行機器人</span><span class="arrow">➜</span>
+      <span class="node">自動登入並逐筆送出</span><span class="arrow">➜</span>
+      <span class="node">成功／失敗清單</span>
+    </div>
+    <p class="tagline reveal">簡單說：<b>先用 HTML 填資料</b>，再讓<b>機器人幫你送出申請</b>。</p>
+  </div>
+</section>
+
+<!-- ===== 事前準備 ===== -->
+<section id="prep">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">PREPARATION</span>
+      <h2>事前準備</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+      <p>以下設定只需要做一次。</p>
+    </div>
+
+    <div class="prep-layout">
+      <ul class="checklist">
+        <li class="card reveal">
+          <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><h4>電腦：Windows 或 Mac 都可以</h4><p>兩種系統都能使用，不需要額外安裝程式。</p></div>
+        </li>
+        <li class="card reveal">
+          <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><h4>瀏覽器：建議 Google Chrome</h4><p>Microsoft Edge 也可以。</p></div>
+        </li>
+        <li class="card reveal">
+          <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><h4>安裝 Automa 擴充功能</h4><p>到 Chrome 線上應用程式商店搜尋「Automa」並安裝。</p></div>
+        </li>
+        <li class="card important reveal">
+          <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div>
+            <h4>開啟檔案存取權限 <span class="chip red">很重要</span></h4>
+            <p>沒開的話，機器人會讀不到 CSV。</p>
+            <ol class="steps-mini">
+              <li>在網址列輸入 <code>chrome://extensions</code> 並按 Enter</li>
+              <li>找到 Automa，按「詳細資料」</li>
+              <li>打開「<b>允許存取檔案網址</b>」</li>
+            </ol>
+          </div>
+        </li>
+        <li class="card reveal">
+          <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><h4>匯入機器人流程</h4><p>打開 Automa → 工作流程（Workflows）→ 匯入（Import）→ 選擇 <code>社宅場地租借.automa.json</code>。</p></div>
+        </li>
+        <li class="card reveal">
+          <span class="tick"><svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+          <div><h4>確認登入帳號</h4><p>機器人會用流程裡設定好的台北通帳號密碼登入。要改成自己的帳號，請在 Automa 打開流程，修改「輸入帳號」「輸入密碼」兩個方塊。</p></div>
+        </li>
+      </ul>
+
+      <aside class="prep-side">
+        <div class="card art reveal d1" aria-hidden="true">
+          <svg viewBox="0 0 260 200" width="100%">
+            <rect x="20" y="20" width="220" height="150" rx="12" fill="#fff" stroke="#3b2f27" stroke-width="2.5"/>
+            <rect x="20" y="20" width="220" height="28" rx="12" fill="#e9e1d2" stroke="#3b2f27" stroke-width="2.5"/>
+            <circle cx="38" cy="34" r="5" fill="#ff5f57"/><circle cx="54" cy="34" r="5" fill="#febc2e"/><circle cx="70" cy="34" r="5" fill="#28c840"/>
+            <rect x="86" y="27" width="140" height="14" rx="7" fill="#fff"/>
+            <text x="94" y="38" font-size="9" font-family="monospace" fill="#5d5249">chrome://extensions</text>
+            <rect x="40" y="64" width="40" height="40" rx="10" fill="#4f8a8b"/>
+            <path d="M52 92 l8 -18 l8 18" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>
+            <text x="92" y="82" font-size="14" font-weight="700" fill="#2b2622">Automa</text>
+            <text x="92" y="98" font-size="10" fill="#8d8174">擴充功能</text>
+            <text x="40" y="136" font-size="11" fill="#2b2622">允許存取檔案網址</text>
+            <g>
+              <rect x="180" y="124" width="40" height="20" rx="10" fill="#4f8a8b"/>
+              <circle class="pulse" cx="210" cy="134" r="8" fill="#fff"/>
+            </g>
+            <circle class="ring" cx="200" cy="134" r="18" fill="none" stroke="#c0392b" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="warn reveal d2">
+          <h4>⚠ 帳密安全提醒</h4>
+          <p>流程檔裡直接存有台北通帳號密碼，請勿把 <code>社宅場地租借.automa.json</code> 隨意轉傳給不相關的人，也不要上傳到公開網站。</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 檔案下載 ===== -->
+<section id="download">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">DOWNLOAD</span>
+      <h2>檔案下載</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+      <p>依序取得以下三樣東西，就能開始使用。</p>
+    </div>
+    <div class="dl-grid">
+      <article class="card dl-card reveal">
+        <span class="dl-no">壹</span>
+        <div class="dl-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><rect x="6" y="6" width="52" height="52" rx="14" fill="#4f8a8b"/><path d="M22 44 l10 -24 l10 24" fill="none" stroke="#fff" stroke-width="5" stroke-linejoin="round" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Automa 擴充功能</h3>
+        <p>到 Chrome 線上應用程式商店安裝 Automa（免費）。</p>
+        <a class="btn btn-primary dl-btn" href="https://chromewebstore.google.com/detail/automa/infppggnoaenmfagbfknfkancpbljcca?hl=zh-TW" target="_blank" rel="noopener">前往安裝頁面 ↗</a>
+      </article>
+      <article class="card dl-card reveal d1">
+        <span class="dl-no">貳</span>
+        <div class="dl-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><rect x="10" y="4" width="44" height="56" rx="6" fill="#fffaf0" stroke="#3b2f27" stroke-width="3"/><text x="32" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#c0392b" font-family="monospace">JSON</text><path d="M18 40 h28 M18 48 h20" stroke="#8d8174" stroke-width="3" stroke-linecap="round"/></svg>
+        </div>
+        <h3>社宅場地租借 Automa 腳本</h3>
+        <p>下載後在 Automa 選「匯入」載入。記得改成自己的台北通帳號密碼。</p>
+        <a class="btn btn-primary dl-btn" href="https://letscookbaby.work/" target="_blank" rel="noopener">下載腳本 ⬇</a>
+      </article>
+      <article class="card dl-card reveal d2">
+        <span class="dl-no">參</span>
+        <div class="dl-icon" aria-hidden="true">
+          <svg viewBox="0 0 64 64"><rect x="10" y="4" width="44" height="56" rx="6" fill="#fffaf0" stroke="#3b2f27" stroke-width="3"/><text x="32" y="30" text-anchor="middle" font-size="12" font-weight="700" fill="#007aff" font-family="monospace">HTML</text><path d="M18 40 h28 M18 48 h20" stroke="#8d8174" stroke-width="3" stroke-linecap="round"/></svg>
+        </div>
+        <h3>場地租借CSV編輯.html</h3>
+        <p>填單小幫手，下載後雙擊即可開啟使用。</p>
+        <a class="btn btn-primary dl-btn" href="https://letscookbaby.work/123" target="_blank" rel="noopener">下載 HTML 檔 ⬇</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 三大步驟 ===== -->
+<section id="steps" class="steps-section">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">THREE STEPS</span>
+      <h2>自動化申請 3 大步驟</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+    </div>
+
+    <div class="road-wrap" id="roadWrap">
+      <svg class="road" id="road" viewBox="0 0 260 1000" preserveAspectRatio="none" aria-hidden="true">
+        <path class="base" d="M130 0 C 250 120, 10 220, 130 340 S 250 560, 130 680 S 10 880, 130 1000" fill="none" stroke-width="22" stroke-linecap="round"/>
+        <path class="draw" id="roadDraw" d="M130 0 C 250 120, 10 220, 130 340 S 250 560, 130 680 S 10 880, 130 1000" fill="none" stroke-width="4" stroke-dasharray="10 10"/>
+      </svg>
+
+      <div class="step-row reveal">
+        <div class="card step-card">
+          <div class="head">
+            <span class="stamp">壹</span>
+            <div><div class="step-no">STEP 1</div><h3>用 HTML 填寫資料並匯出 CSV</h3></div>
+          </div>
+          <p>雙擊打開 <code>場地租借CSV編輯.html</code>，在表格中填寫場地、日期與時段，確認無誤後按「匯出 CSV」。</p>
+          <div class="chips"><span class="chip gold">租用日期需在 15 天之後</span><span class="chip">自動檢查錯誤</span></div>
+        </div>
+        <div class="step-art" aria-hidden="true">
+          <svg viewBox="0 0 320 240">
+            <ellipse cx="160" cy="226" rx="120" ry="10" fill="#000" opacity=".08"/>
+            <rect x="40" y="20" width="240" height="160" rx="12" fill="#2b3a42" stroke="#3b2f27" stroke-width="3"/>
+            <rect x="52" y="32" width="216" height="136" rx="6" fill="#fbf6ec"/>
+            <rect x="52" y="32" width="216" height="22" rx="6" fill="#e9e1d2"/>
+            <rect x="62" y="38" width="30" height="10" rx="5" fill="#007aff"/>
+            <rect x="98" y="38" width="30" height="10" rx="5" fill="#e5e5ea"/>
+            <rect x="134" y="38" width="30" height="10" rx="5" fill="#007aff"/>
+            <g stroke="#cdb48a" stroke-width="1.5">
+              <path d="M62 72 h196 M62 94 h196 M62 116 h196 M62 138 h196 M62 160 h196"/>
+              <path d="M110 64 v100 M160 64 v100 M210 64 v100"/>
+            </g>
+            <rect class="pop" x="64" y="76" width="42" height="14" rx="3" fill="#cfe3e0"/>
+            <rect class="pop p2" x="114" y="98" width="42" height="14" rx="3" fill="#f3e6b8"/>
+            <rect class="pop p3" x="164" y="120" width="42" height="14" rx="3" fill="#f6d9d3"/>
+            <rect x="140" y="180" width="40" height="22" fill="#3b2f27"/>
+            <rect x="100" y="200" width="120" height="10" rx="4" fill="#3b2f27"/>
+            <g transform="translate(236 150)"><g class="float">
+              <rect width="62" height="74" rx="6" fill="#fffaf0" stroke="#3b2f27" stroke-width="2.5"/>
+              <text x="31" y="28" text-anchor="middle" font-size="15" font-weight="700" fill="#c0392b" font-family="monospace">CSV</text>
+              <path d="M12 42 h38 M12 52 h38 M12 62 h24" stroke="#8d8174" stroke-width="2.5" stroke-linecap="round"/>
+            </g></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="step-row flip reveal">
+        <div class="card step-card">
+          <div class="head">
+            <span class="stamp">貳</span>
+            <div><div class="step-no">STEP 2</div><h3>執行 Automa 並貼上 CSV 路徑</h3></div>
+          </div>
+          <p>在 Chrome 點 Automa 圖示，執行「社宅場地租借」流程，貼上 CSV 檔的完整路徑，機器人就會開始自動填單。</p>
+          <div class="chips"><span class="chip red">過程中別動瀏覽器</span><span class="chip">自動登入台北通</span></div>
+        </div>
+        <div class="step-art" aria-hidden="true">
+          <svg viewBox="0 0 320 240">
+            <ellipse cx="160" cy="226" rx="130" ry="10" fill="#000" opacity=".08"/>
+            <path d="M50 190 L80 60 H240 L270 190 Z" fill="#3b2f27"/>
+            <rect x="84" y="66" width="152" height="112" rx="4" fill="#fbf6ec"/>
+            <path d="M30 190 H290 L276 210 H44 Z" fill="#5d5249"/>
+            <circle class="ring" cx="160" cy="122" r="30" fill="none" stroke="#c0392b" stroke-width="3"/>
+            <g class="pulse">
+              <rect x="112" y="102" width="96" height="40" rx="20" fill="#3f8f5a"/>
+              <path d="M128 112 L128 132 L144 122 Z" fill="#fff"/>
+              <text x="178" y="128" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="sans-serif">PLAY</text>
+            </g>
+            <g transform="translate(14 54)"><g class="float">
+              <rect x="16" y="-12" width="4" height="12" fill="#3b2f27"/>
+              <circle class="antenna" cx="18" cy="-14" r="5" fill="#c0392b"/>
+              <rect x="0" y="0" width="36" height="30" rx="9" fill="#e8eef0" stroke="#3b2f27" stroke-width="2"/>
+              <g class="blink"><circle cx="12" cy="15" r="4" fill="#2b3a42"/><circle cx="24" cy="15" r="4" fill="#2b3a42"/></g>
+              <rect x="4" y="32" width="28" height="26" rx="7" fill="#e8eef0" stroke="#3b2f27" stroke-width="2"/>
+            </g></g>
+            <g transform="translate(250 30)"><g class="float slow">
+              <rect width="58" height="30" rx="8" fill="#fff" stroke="#3b2f27" stroke-width="2"/>
+              <text x="29" y="20" text-anchor="middle" font-size="10" font-family="monospace" fill="#5d5249">C:\...csv</text>
+            </g></g>
+          </svg>
+        </div>
+      </div>
+
+      <div class="step-row reveal">
+        <div class="card step-card">
+          <div class="head">
+            <span class="stamp">參</span>
+            <div><div class="step-no">STEP 3</div><h3>確認執行結果與複製失敗清單</h3></div>
+          </div>
+          <p>執行完畢後會顯示成功／失敗筆數，失敗的項目可一鍵「複製失敗清單」，貼到 Excel 或 LINE 進行人工補申請。</p>
+          <div class="chips"><span class="chip">成功＝綠色</span><span class="chip red">失敗＝紅色並附原因</span></div>
+        </div>
+        <div class="step-art" aria-hidden="true">
+          <svg viewBox="0 0 320 240">
+            <ellipse cx="160" cy="226" rx="110" ry="10" fill="#000" opacity=".08"/>
+            <rect x="80" y="26" width="160" height="196" rx="12" fill="#fffaf0" stroke="#3b2f27" stroke-width="3"/>
+            <rect x="126" y="14" width="68" height="24" rx="8" fill="#8a5a32" stroke="#3b2f27" stroke-width="2.5"/>
+            <g>
+              <use class="pop" href="#check" x="98" y="56" width="26" height="26" style="color:#3f8f5a"/>
+              <path d="M134 69 h86" stroke="#3f8f5a" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+              <use class="pop p2" href="#check" x="98" y="96" width="26" height="26" style="color:#3f8f5a"/>
+              <path d="M134 109 h70" stroke="#3f8f5a" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+              <g class="pop p3"><path d="M103 140 l16 16 M119 140 l-16 16" stroke="#c62828" stroke-width="4" stroke-linecap="round"/></g>
+              <path d="M134 148 h80" stroke="#c62828" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+              <use class="pop" href="#check" x="98" y="174" width="26" height="26" style="color:#3f8f5a"/>
+              <path d="M134 187 h60" stroke="#3f8f5a" stroke-width="4" stroke-linecap="round" opacity=".6"/>
+            </g>
+            <g transform="translate(236 120)"><g class="float">
+              <circle r="30" fill="#c0392b"/>
+              <text y="-4" text-anchor="middle" font-size="12" fill="#fff" font-family="sans-serif">成功</text>
+              <text y="14" text-anchor="middle" font-size="16" font-weight="700" fill="#fff" font-family="sans-serif">3/4</text>
+            </g></g>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 步驟一細節 ===== -->
+<section id="step1">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">STEP 1 DETAIL</span>
+      <h2>步驟一：用 HTML 填資料</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+      <p>直接<b>雙擊</b> <code>場地租借CSV編輯.html</code>，會用瀏覽器開啟。不用安裝任何東西，也不用連網。</p>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-title reveal"><span class="stamp" style="width:44px;height:44px;font-size:20px">鈕</span><h3>畫面上的按鈕</h3><span class="line"></span></div>
+      <div class="grid-3">
+        <div class="card mini-card reveal"><h4><span class="fake-btn">新增一列</span></h4><p>在表格最下面加一筆空白資料。</p></div>
+        <div class="card mini-card reveal d1"><h4><span class="fake-btn gray">匯入 CSV</span></h4><p>把之前存過的 CSV 讀回來繼續編輯（會<b>取代</b>目前表格內容）。</p></div>
+        <div class="card mini-card reveal d2"><h4><span class="fake-btn">匯出 CSV</span></h4><p>檢查資料無誤後，存成 CSV 檔。</p></div>
+        <div class="card mini-card reveal"><h4><span class="fake-btn danger">清空表格</span></h4><p>清除全部資料（會先問你確定嗎）。</p></div>
+        <div class="card mini-card reveal d1"><h4><span class="fake-btn link">複製</span></h4><p>在下方複製一筆一模一樣的資料，適合「同場地、不同日期」。</p></div>
+        <div class="card mini-card reveal d2"><h4><span class="fake-btn link" style="color:#ff3b30">刪除</span></h4><p>刪掉這一筆（至少會保留一列）。</p></div>
+      </div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-title reveal"><span class="stamp" style="width:44px;height:44px;font-size:20px">欄</span><h3>每個欄位怎麼填</h3><span class="line"></span></div>
+      <div class="card field-table reveal">
+        <div class="field-row"><b>場地名稱</b><span>從下拉選單選（多功能空間1、2、3、5）</span></div>
+        <div class="field-row"><b>信箱</b><span>接收通知的 Email，例如 <code>name@example.com</code></span></div>
+        <div class="field-row"><b>租用日期</b><span>輸入 <b>8 碼數字</b>，例如 <code>20261130</code>（打其他符號會自動被去掉）</span></div>
+        <div class="field-row"><b>租用時段</b><span>從下拉選單選（08:30-12:30、13:00-17:00、18:00-22:00）</span></div>
+        <div class="field-row"><b>人數</b><span>填數字</span></div>
+        <div class="field-row"><b>申請單位及負責人名稱</b><span>例如「青創協會 王小明」</span></div>
+        <div class="field-row"><b>活動名稱</b><span>活動的名稱</span></div>
+        <div class="field-row"><b>活動編號</b><span>有就填，沒有可空白</span></div>
+      </div>
+
+      <div class="card rule-box reveal">
+        <svg class="cal" viewBox="0 0 96 96" aria-hidden="true">
+          <rect x="8" y="16" width="80" height="72" rx="10" fill="#fff" stroke="#3b2f27" stroke-width="3"/>
+          <rect x="8" y="16" width="80" height="22" rx="10" fill="#c0392b"/>
+          <rect x="8" y="30" width="80" height="8" fill="#c0392b"/>
+          <rect x="26" y="8" width="6" height="18" rx="3" fill="#3b2f27"/>
+          <rect x="64" y="8" width="6" height="18" rx="3" fill="#3b2f27"/>
+          <text x="48" y="74" text-anchor="middle" font-size="30" font-weight="700" fill="#2b2622" font-family="serif">16</text>
+          <circle class="ring" cx="48" cy="64" r="20" fill="none" stroke="#c9a227" stroke-width="3"/>
+        </svg>
+        <div>
+          <h4>重要規則：日期必須在 15 天之後</h4>
+          <p>社宅雲<b>只接受使用日兩週前</b>提出的申請，所以租用日期必須比今天晚 <b>16 天以上</b>。填太早的日期會跳出提醒：</p>
+          <span class="msg">社宅雲僅接受使用日前兩週提出的線上申請</span>
+        </div>
+        <div class="earliest">
+          <small>以今天計算，最早可選</small>
+          <strong id="earliestYmd">--------</strong>
+          <span id="earliestText"></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-block">
+      <div class="detail-title reveal"><span class="stamp" style="width:44px;height:44px;font-size:20px">出</span><h3>匯出 CSV</h3><span class="line"></span></div>
+      <div class="grid-2">
+        <div class="card mini-card reveal">
+          <ol class="timeline">
+            <li><span class="dot">1</span><h4>按「匯出 CSV」</h4><p>工具會先幫你檢查全部資料。</p></li>
+            <li><span class="dot">2</span><h4>有錯會列出清單</h4><p>告訴你「第幾列、哪個欄位、什麼問題」，改好再按一次。</p></li>
+            <li><span class="dot">3</span><h4>沒問題就存檔</h4><p>Chrome / Edge 會跳出存檔視窗；Safari 等會直接存到「下載」資料夾。</p></li>
+            <li class="hot"><span class="dot">4</span><h4>記住存放位置</h4><p>檔名像 <code>場地租借_20261018_153000.csv</code>，下一步要用。</p></li>
+          </ol>
+        </div>
+        <div class="grid-2" style="gap:16px;align-content:start">
+          <div class="card mini-card reveal d1"><h4>💾 自動保存</h4><p>資料會自動保存在這台電腦的瀏覽器裡，關掉再打開資料還在。</p></div>
+          <div class="card mini-card reveal d2"><h4>🔁 換電腦怎麼辦</h4><p>換電腦或換瀏覽器就看不到，重要資料請記得匯出 CSV 保存。</p></div>
+          <div class="card mini-card reveal d1" style="grid-column:1/-1"><h4>📋 同場地多日期</h4><p>先填好一筆，按「複製」再只改日期，最省時。</p></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 步驟二細節 ===== -->
+<section id="step2">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">STEP 2 &amp; 3 DETAIL</span>
+      <h2>步驟二：讓機器人自動送出</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+    </div>
+
+    <div class="grid-2">
+      <div class="stack">
+        <div class="card tabs reveal">
+          <h4 style="margin:0 0 6px;font-size:17px">1. 執行流程並輸入 CSV 路徑</h4>
+          <p style="margin:0 0 14px;color:var(--ink-soft);font-size:15px">點 Chrome 右上角 Automa 圖示 → 找到「社宅場地租借」→ 按 <b>執行（▶）</b>，在跳出的視窗輸入 CSV 檔完整路徑：</p>
+          <div class="tab-bar" role="tablist">
+            <button role="tab" aria-selected="true" data-tab="win">Windows</button>
+            <button role="tab" aria-selected="false" data-tab="mac">Mac</button>
+          </div>
+          <div class="path-box">
+            <code id="pathText">C:\Users\你的名字\Downloads\場地租借_20261018_153000.csv</code>
+            <button class="copy-btn" id="copyPath" type="button">複製</button>
+          </div>
+          <p class="tip" id="pathTip">小技巧：在檔案總管對檔案按住 <kbd>Shift</kbd> + 右鍵 →「複製路徑」，再貼上即可（前後的引號會自動去掉）。</p>
+        </div>
+
+        <div class="card mini-card reveal">
+          <h4 style="font-size:17px">2. 機器人自動完成以下動作</h4>
+          <p style="margin-bottom:14px">過程中<b style="color:var(--red)">請不要操作那個瀏覽器視窗</b>。</p>
+          <ol class="timeline">
+            <li><span class="dot">1</span><h4>開啟社宅雲並用台北通登入</h4></li>
+            <li><span class="dot">2</span><h4>進入場地列表</h4></li>
+            <li class="hot"><span class="dot">↻</span><h4>每一筆依序處理</h4><p>點選場地 → 我要租借 → 同意規約 → 填寫表單 → 送出申請</p></li>
+          </ol>
+        </div>
+
+        <div class="card mini-card reveal">
+          <h4 style="font-size:17px">3. 表單中自動幫你選好</h4>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">
+            <span class="chip">使用單位：青創</span>
+            <span class="chip">冷氣：是（場地有冷氣時）</span>
+            <span class="chip gold">公益性質：是</span>
+            <span class="chip gold">類別：配合機關主辦之活動</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stack">
+        <div class="reveal d1">
+          <h4 style="margin:0 0 10px;font-size:17px">4. 右上角即時執行紀錄（示意）</h4>
+          <div class="log-panel" id="logPanel">
+            <div class="bar"><span>社宅場地租借 執行紀錄</span><i>收合</i><i>關閉</i></div>
+            <div class="status" id="logStatus">準備中…</div>
+            <div class="rows" id="logRows"></div>
+          </div>
+        </div>
+        <div class="card mini-card reveal d2">
+          <h4 style="font-size:17px">5. 執行完成後</h4>
+          <ul style="margin:6px 0 0;padding-left:20px;color:var(--ink-soft);font-size:15px">
+            <li>跳出統計訊息，例如「執行完成：成功 8 筆，失敗 2 筆」。</li>
+            <li>失敗的筆數會寫出原因（例如「租用時段不在可選時段內」）。</li>
+            <li>按「<b>複製失敗清單</b>」，貼到 Excel 或 LINE 方便<b>人工補申請</b>。</li>
+            <li>某一筆失敗<b>不會中斷</b>流程，機器人會自動跳過，繼續下一筆。</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 常見問題 ===== -->
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">FAQ</span>
+      <h2>常見問題</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+    </div>
+    <div class="faq">
+      <h3 class="faq-group reveal">方案設計說明</h3>
+      <details class="card reveal">
+        <summary><span class="q">一</span>為什麼不採用線上表單系統直接自動填單？</summary>
+        <div class="answer">
+          <p>本方案不採用獨立的線上表單系統直接串接或自動操作社宅雲，主要考量在於<b>系統穩定性、後續維護成本，以及帳號使用的責任歸屬</b>。</p>
+          <p>社宅雲是由外部單位維運的平台，我們無法掌握其系統狀態與更新時程。若自動填單時遇到系統維護、服務異常、資料傳輸缺漏，或平台介面更新，都可能造成自動化流程失效，進而影響場地租借申請。</p>
+          <p>一旦發生問題，除了可能影響場地使用安排，也可能需要原系統開發者介入排查與修正，形成長期的維護負擔。</p>
+        </div>
+      </details>
+      <details class="card reveal">
+        <summary><span class="q">二</span>避免共用帳號造成管理與責任問題</summary>
+        <div class="answer">
+          <p>另一項重要考量，是不希望將社宅雲的帳號與密碼集中綁定於某一位青創成員，再由該帳號統一執行所有自動填單作業。</p>
+          <p>若該成員日後不再續租、退出團隊，或與團隊發生其他爭議，都可能影響系統的持續運作，也會衍生帳號交接、權限管理及責任歸屬等問題。</p>
+          <p>因此，本方案傾向讓<b>每位成員使用自己的社宅雲帳號操作</b>，避免共用帳密所帶來的管理風險，並由實際申請者確認申請內容及承擔相應責任。</p>
+        </div>
+      </details>
+      <details class="card reveal">
+        <summary><span class="q">三</span>為什麼選擇瀏覽器外掛？</summary>
+        <div class="answer">
+          <p>考量青創團隊目前已習慣透過 Google 表單提交場地租借需求，本方案不打算改變既有的填單流程，而是採用瀏覽器外掛搭配自動填單腳本，協助將 Google 表單中的資料帶入社宅雲。</p>
+          <p>這種做法有以下優點：</p>
+          <ul>
+            <li><b>保留原有作業習慣：</b>成員仍透過熟悉的 Google 表單提交需求，不必重新學習一套申請系統。</li>
+            <li><b>使用個人帳號：</b>自動填單在成員自己的瀏覽器及社宅雲登入環境中執行，避免集中管理所有人的帳號與密碼。</li>
+            <li><b>降低維護依賴：</b>若社宅雲更新介面，導致腳本無法正常運作，可由具備相關能力的成員自行修改，也可將腳本交由 AI 協助分析與修正，不必每次都仰賴原開發者。</li>
+            <li><b>降低人員異動的影響：</b>即使原開發者或其他青創成員離開，只要腳本及操作文件有妥善保存，後續仍可由其他人接手維護。</li>
+          </ul>
+        </div>
+      </details>
+      <details class="card reveal">
+        <summary><span class="q">四</span>方案的核心原則</summary>
+        <div class="answer">
+          <p>本方案並不是要打造一套需要長期仰賴特定開發者維護的新系統，而是以<b>最小幅度的技術介入</b>，解決現有作業中的重複填寫問題。</p>
+          <p>核心原則如下：</p>
+          <ol class="principles">
+            <li><b>不改變既有流程：</b>保留 Google 表單作為團隊內部的需求蒐集工具。</li>
+            <li><b>不集中管理帳密：</b>每位成員使用自己的社宅雲帳號，避免共用帳號所造成的風險。</li>
+            <li><b>降低對原開發者的依賴：</b>讓腳本具備可交接、可修改、可由其他人接手維護的特性。</li>
+            <li><b>申請者自行確認：</b>自動填入資料不代表申請已成功，仍須由申請者確認資料正確、完成送出，並確認社宅雲實際受理結果。</li>
+          </ol>
+        </div>
+      </details>
+
+      <h3 class="faq-group reveal">操作問題</h3>
+      <details class="card reveal"><summary><span class="q">問</span>機器人說「讀取檔案失敗」</summary><div class="answer">檢查路徑有沒有打錯、檔名有沒有含 <code>.csv</code>，以及 Automa 是否已開啟「允許存取檔案網址」。</div></details>
+      <details class="card reveal"><summary><span class="q">問</span>機器人說「標題列缺少欄位」</summary><div class="answer">請用 HTML 工具匯出的 CSV，不要用 Excel 另存造成格式跑掉。</div></details>
+      <details class="card reveal"><summary><span class="q">問</span>某筆顯示「送出後未確認成功，可能已送出」</summary><div class="answer">網站反應較慢，請到社宅雲的「空間租借紀錄」確認是否已申請，避免重複送出。</div></details>
+      <details class="card reveal"><summary><span class="q">問</span>某筆顯示「沒有可選的租用時段」</summary><div class="answer">該日期時段可能已被別人借走或尚未開放，請換日期或時段。</div></details>
+      <details class="card reveal"><summary><span class="q">問</span>HTML 打開後資料不見了</summary><div class="answer">可能換了瀏覽器或清除了瀏覽紀錄。用「匯入 CSV」把之前匯出的檔案讀回來即可。</div></details>
+      <details class="card reveal"><summary><span class="q">問</span>想改信箱、日期後重跑失敗的幾筆</summary><div class="answer">在 HTML 裡只保留失敗的那幾筆，修正後重新匯出，再執行一次機器人。</div></details>
+    </div>
+  </div>
+</section>
+
+<!-- ===== 總結 ===== -->
+<section class="summary" id="summary">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <span class="kicker">SUMMARY</span>
+      <h2>一句話總結</h2>
+      <svg class="brush"><use href="#brush"/></svg>
+    </div>
+    <div class="summary-steps">
+      <div class="card reveal"><div class="big">壹</div><h4>雙擊 HTML</h4><p>填好表格 → 匯出 CSV</p></div>
+      <div class="card reveal d1"><div class="big">貳</div><h4>執行 Automa</h4><p>貼上 CSV 路徑 → 等機器人跑完</p></div>
+      <div class="card reveal d2"><div class="big">參</div><h4>確認結果</h4><p>看結果，失敗的人工補上即可</p></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <svg class="landscape" viewBox="0 0 1200 120" preserveAspectRatio="none" aria-hidden="true">
+    <path d="M0 120 L0 90 Q 150 60 300 88 T 600 80 T 900 86 T 1200 76 L1200 120 Z" fill="#e6d5b5"/>
+    <path d="M520 90 L600 30 Q610 22 620 30 L700 90 Z" fill="#9dbcc0"/>
+    <path d="M582 44 L600 30 Q610 22 620 30 L638 44 L626 40 L614 48 L604 40 L594 48 Z" fill="#fbf6ec"/>
+    <g transform="translate(860 52)">
+      <path d="M-6 22 L40 4 L86 22 Z" fill="#3b2f27"/>
+      <rect x="6" y="22" width="68" height="34" fill="#f6ecd9" stroke="#3b2f27" stroke-width="1.5"/>
+    </g>
+    <use href="#blossom" x="200" y="50" width="22" height="22"/>
+    <use href="#blossom" x="320" y="62" width="16" height="16"/>
+    <use href="#blossom" x="1040" y="44" width="20" height="20"/>
+  </svg>
+  <div class="wrap">
+    <p class="sig">本程式由 興隆A Samuel 撰寫及維護</p>
+    <p>若有問題可加 LINE：<b>henrychiou</b></p>
+  </div>
+</footer>
+
+<button id="toTop" type="button" aria-label="回到頂端">頂</button>
+
+<script>
+(() => {
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* 最早可選日期 */
+  const earliest = new Date();
+  earliest.setHours(0, 0, 0, 0);
+  earliest.setDate(earliest.getDate() + 16);
+  const pad = (n) => String(n).padStart(2, '0');
+  document.getElementById('earliestYmd').textContent =
+    `${earliest.getFullYear()}${pad(earliest.getMonth() + 1)}${pad(earliest.getDate())}`;
+  document.getElementById('earliestText').textContent =
+    `${earliest.getFullYear()} 年 ${earliest.getMonth() + 1} 月 ${earliest.getDate()} 日（星期${'日一二三四五六'[earliest.getDay()]}）`;
+
+  /* 捲動進場 */
+  const revealEls = document.querySelectorAll('.reveal, .checklist li');
+  if ('IntersectionObserver' in window && !reduceMotion) {
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+      });
+    }, { threshold: .15, rootMargin: '0px 0px -40px 0px' });
+    revealEls.forEach((el) => io.observe(el));
+  } else {
+    revealEls.forEach((el) => el.classList.add('in'));
+  }
+
+  /* 進度條、回頂端、小路描繪、導覽高亮 */
+  const progress = document.getElementById('progress');
+  const toTop = document.getElementById('toTop');
+  const roadWrap = document.getElementById('roadWrap');
+  const roadDraw = document.getElementById('roadDraw');
+  const roadLen = roadDraw.getTotalLength();
+  roadDraw.style.strokeDasharray = `${roadLen}`;
+  roadDraw.style.strokeDashoffset = `${roadLen}`;
+  const navLinks = [...document.querySelectorAll('.topnav nav a')];
+  const navTargets = navLinks.map((a) => document.querySelector(a.getAttribute('href')));
+
+  const onScroll = () => {
+    const max = document.documentElement.scrollHeight - innerHeight;
+    progress.style.transform = `scaleX(${max > 0 ? scrollY / max : 0})`;
+    toTop.classList.toggle('show', scrollY > innerHeight * .8);
+
+    const r = roadWrap.getBoundingClientRect();
+    const t = Math.min(1, Math.max(0, (innerHeight * .75 - r.top) / r.height));
+    roadDraw.style.strokeDashoffset = `${roadLen * (1 - t)}`;
+
+    let current = -1;
+    let best = -Infinity;
+    navTargets.forEach((el, i) => {
+      const top = el ? el.getBoundingClientRect().top : Infinity;
+      if (top < innerHeight * .35 && top > best) { best = top; current = i; }
+    });
+    navLinks.forEach((a, i) => a.classList.toggle('active', i === current));
+  };
+  addEventListener('scroll', onScroll, { passive: true });
+  addEventListener('resize', onScroll);
+  onScroll();
+  toTop.addEventListener('click', () => scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' }));
+
+  /* 路徑分頁與複製 */
+  const paths = {
+    win: { text: 'C:\\Users\\你的名字\\Downloads\\場地租借_20261018_153000.csv', tip: '小技巧：在檔案總管對檔案按住 <kbd>Shift</kbd> + 右鍵 →「複製路徑」，再貼上即可（前後的引號會自動去掉）。' },
+    mac: { text: '/Users/你的名字/Downloads/場地租借_20261018_153000.csv', tip: '小技巧：在 Finder 選取檔案後按 <kbd>Option</kbd> + <kbd>Command</kbd> + <kbd>C</kbd>，即可複製完整路徑。' },
+  };
+  const pathText = document.getElementById('pathText');
+  const pathTip = document.getElementById('pathTip');
+  document.querySelectorAll('.tab-bar button').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-bar button').forEach((b) => b.setAttribute('aria-selected', String(b === btn)));
+      const p = paths[btn.dataset.tab];
+      pathText.textContent = p.text;
+      pathTip.innerHTML = p.tip;
+    });
+  });
+  if (/Mac/i.test(navigator.platform || navigator.userAgent)) {
+    document.querySelector('.tab-bar button[data-tab="mac"]').click();
+  }
+
+  const copyBtn = document.getElementById('copyPath');
+  copyBtn.addEventListener('click', async () => {
+    const text = pathText.textContent;
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+    }
+    copyBtn.textContent = '已複製 ✓';
+    copyBtn.classList.add('done');
+    setTimeout(() => { copyBtn.textContent = '複製'; copyBtn.classList.remove('done'); }, 1600);
+  });
+
+  /* 執行紀錄示意動畫 */
+  const demo = [
+    { ok: true, text: '第 1 筆（CSV 第 2 列）多功能空間2 20261130 18:00-22:00' },
+    { ok: true, text: '第 2 筆（CSV 第 3 列）多功能空間2 20261201 18:00-22:00' },
+    { ok: false, text: '第 3 筆（CSV 第 4 列）多功能空間3 20261205 13:00-17:00', reason: '原因：租用時段「13:00-17:00」不在可選時段內' },
+    { ok: true, text: '第 4 筆（CSV 第 5 列）多功能空間1 20261208 08:30-12:30' },
+  ];
+  const logStatus = document.getElementById('logStatus');
+  const logRows = document.getElementById('logRows');
+  let logStarted = false;
+
+  const runDemo = async () => {
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+    for (;;) {
+      logRows.innerHTML = '';
+      let okCount = 0;
+      for (let i = 0; i < demo.length; i++) {
+        const d = demo[i];
+        logStatus.style.color = '#2a5599';
+        logStatus.textContent = `執行中：第 ${i + 1} / ${demo.length} 筆`;
+        await sleep(1300);
+        const row = document.createElement('div');
+        row.className = `log-row ${d.ok ? 'ok' : 'ng'}`;
+        const b = document.createElement('b');
+        b.textContent = d.ok ? '成功 ' : '失敗 ';
+        row.append(b, d.text);
+        if (d.reason) {
+          const s = document.createElement('small');
+          s.textContent = d.reason;
+          row.append(s);
+        }
+        logRows.append(row);
+        requestAnimationFrame(() => row.classList.add('show'));
+        if (d.ok) okCount++;
+      }
+      const fail = demo.length - okCount;
+      logStatus.style.color = fail ? '#c62828' : '#1a7f37';
+      logStatus.textContent = `執行完成：成功 ${okCount} 筆，失敗 ${fail} 筆（共 ${demo.length} 筆）`;
+      const copy = document.createElement('span');
+      copy.className = 'log-copy';
+      copy.textContent = '複製失敗清單';
+      logRows.append(copy);
+      requestAnimationFrame(() => copy.classList.add('show'));
+      await sleep(5000);
+    }
+  };
+
+  const logPanel = document.getElementById('logPanel');
+  if (reduceMotion || !('IntersectionObserver' in window)) {
+    runDemo();
+  } else {
+    new IntersectionObserver((entries, obs) => {
+      if (entries[0].isIntersecting && !logStarted) { logStarted = true; obs.disconnect(); runDemo(); }
+    }, { threshold: .3 }).observe(logPanel);
+  }
+
+  /* 櫻花飄落 */
+  const canvas = document.getElementById('petals');
+  if (reduceMotion || !canvas.getContext) { canvas.remove(); return; }
+  const ctx = canvas.getContext('2d');
+  let W = 0, H = 0, dpr = 1;
+  const resize = () => {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = innerWidth; H = innerHeight;
+    canvas.width = W * dpr; canvas.height = H * dpr;
+    canvas.style.width = W + 'px'; canvas.style.height = H + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  };
+  resize();
+  addEventListener('resize', resize);
+
+  const count = innerWidth < 768 ? 14 : 26;
+  const rand = (a, b) => a + Math.random() * (b - a);
+  const makePetal = (initial) => ({
+    x: rand(-50, W),
+    y: initial ? rand(-H, H) : rand(-80, -20),
+    size: rand(7, 13),
+    vy: rand(.5, 1.2),
+    vx: rand(.2, .8),
+    rot: rand(0, Math.PI * 2),
+    vr: rand(-.02, .02),
+    flip: rand(0, Math.PI * 2),
+    vf: rand(.02, .05),
+    sway: rand(.6, 1.6),
+    hue: Math.random() < .5 ? '#f4bfcc' : '#f7cfd9',
+  });
+  const petals = Array.from({ length: count }, () => makePetal(true));
+
+  const drawPetal = (p) => {
+    ctx.save();
+    ctx.translate(p.x, p.y);
+    ctx.rotate(p.rot);
+    ctx.scale(1, Math.abs(Math.cos(p.flip)) * .8 + .2);
+    ctx.beginPath();
+    ctx.moveTo(0, -p.size);
+    ctx.bezierCurveTo(p.size * .9, -p.size * .7, p.size * .7, p.size * .6, 0, p.size);
+    ctx.bezierCurveTo(-p.size * .7, p.size * .6, -p.size * .9, -p.size * .7, 0, -p.size);
+    ctx.fillStyle = p.hue;
+    ctx.globalAlpha = .85;
+    ctx.fill();
+    ctx.strokeStyle = '#e58fa6';
+    ctx.lineWidth = .6;
+    ctx.stroke();
+    ctx.restore();
+  };
+
+  let t = 0;
+  const tick = () => {
+    t += 1;
+    ctx.clearRect(0, 0, W, H);
+    for (const p of petals) {
+      p.y += p.vy;
+      p.x += p.vx + Math.sin((t + p.flip * 50) / 60) * p.sway * .5;
+      p.rot += p.vr;
+      p.flip += p.vf;
+      if (p.y > H + 30 || p.x > W + 50) Object.assign(p, makePetal(false));
+      drawPetal(p);
+    }
+    requestAnimationFrame(tick);
+  };
+  tick();
+})();
+</script>
+</body>
+</html>

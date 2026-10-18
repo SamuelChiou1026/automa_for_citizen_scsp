@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>場地租借 CSV 編輯</title>
+<style>
+:root {
+  --ios-bg: #f2f2f7;
+  --ios-card: #ffffff;
+  --ios-blue: #007aff;
+  --ios-red: #ff3b30;
+  --ios-label: #1c1c1e;
+  --ios-secondary: #8e8e93;
+  --ios-separator: rgba(60, 60, 67, 0.18);
+  --ios-fill: rgba(118, 118, 128, 0.12);
+  --ios-font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Segoe UI", "Microsoft JhengHei", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  background: var(--ios-bg);
+  color: var(--ios-label);
+  font-family: var(--ios-font);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ios-nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 14px 24px;
+  font-size: 17px;
+  font-weight: 600;
+  background: rgba(242, 242, 247, 0.85);
+  border-bottom: 0.5px solid var(--ios-separator);
+  backdrop-filter: saturate(180%) blur(20px);
+  -webkit-backdrop-filter: saturate(180%) blur(20px);
+}
+
+.ios-page {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+}
+
+.ios-title {
+  font-size: 34px;
+  font-weight: 700;
+  letter-spacing: 0.37px;
+  margin: 8px 0 4px;
+}
+
+.ios-copyright {
+  color: var(--ios-secondary);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.ios-subtitle {
+  color: var(--ios-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 20px;
+}
+
+.ios-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.ios-section-label {
+  color: var(--ios-secondary);
+  font-size: 13px;
+  margin: 0 0 6px 16px;
+}
+
+.ios-card {
+  background: var(--ios-card);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ios-table-wrap { overflow-x: auto; }
+
+.ios-table {
+  width: 100%;
+  min-width: 1280px;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.ios-table th {
+  text-align: left;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--ios-secondary);
+  padding: 12px 8px;
+  white-space: nowrap;
+  border-bottom: 0.5px solid var(--ios-separator);
+  background: #fbfbfd;
+}
+
+.ios-table td {
+  padding: 8px;
+  border-bottom: 0.5px solid var(--ios-separator);
+  vertical-align: middle;
+}
+
+.ios-table tr:last-child td { border-bottom: none; }
+
+.ios-index {
+  color: var(--ios-secondary);
+  width: 32px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.ios-actions { white-space: nowrap; width: 1%; }
+
+.ios-field {
+  width: 100%;
+  min-width: 120px;
+  height: 40px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 10px;
+  background: var(--ios-fill);
+  color: var(--ios-label);
+  font: 15px var(--ios-font);
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ios-field:focus { box-shadow: 0 0 0 2px var(--ios-blue); }
+
+.ios-field::placeholder { color: #b0b0b8; }
+
+.ios-wide .ios-field { min-width: 200px; }
+
+select.ios-field {
+  min-width: 150px;
+  padding-right: 32px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%238e8e93' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.ios-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 22px;
+  font: 600 17px var(--ios-font);
+  cursor: pointer;
+}
+
+.ios-btn:active { opacity: 0.7; }
+
+.ios-btn-primary { background: var(--ios-blue); color: #fff; }
+
+.ios-btn-secondary { background: var(--ios-fill); color: var(--ios-blue); }
+
+.ios-btn-danger { background: var(--ios-fill); color: var(--ios-red); }
+
+.ios-link {
+  border: none;
+  background: transparent;
+  color: var(--ios-blue);
+  font: 15px var(--ios-font);
+  padding: 4px 8px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ios-link:hover { background: var(--ios-fill); }
+
+.ios-link-danger { color: var(--ios-red); }
+
+.ios-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  background: rgba(30, 30, 30, 0.88);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font: 15px var(--ios-font);
+  z-index: 3000;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  max-width: 90vw;
+  text-align: center;
+}
+
+.ios-alert-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.ios-alert {
+  width: min(420px, 90vw);
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: rgba(250, 250, 250, 0.97);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+}
+
+.ios-alert-body {
+  padding: 20px 20px 16px;
+  overflow-y: auto;
+  text-align: center;
+}
+
+.ios-alert-title {
+  font-size: 17px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.ios-alert-message {
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.ios-error-list {
+  text-align: left;
+  margin: 8px 0 0;
+  padding-left: 20px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.ios-alert-buttons {
+  display: flex;
+  border-top: 0.5px solid var(--ios-separator);
+}
+
+.ios-alert-buttons button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 12px 0;
+  font: 17px var(--ios-font);
+  color: var(--ios-blue);
+  cursor: pointer;
+}
+
+.ios-alert-buttons button + button { border-left: 0.5px solid var(--ios-separator); }
+
+.ios-alert-buttons button.is-default { font-weight: 600; }
+
+.ios-alert-buttons button.is-danger { color: var(--ios-red); }
+</style>
+</head>
+<body>
+<div class="ios-nav">場地租借 CSV 編輯</div>
+
+<main class="ios-page">
+  <h1 class="ios-title">場地租借 CSV 編輯</h1>
+  <p class="ios-copyright">本程式由 興隆A Samuel 撰寫及維護 若有問題可加LINE：henrychiou</p>
+  <p class="ios-subtitle" id="subtitle"></p>
+
+  <div class="ios-toolbar">
+    <button type="button" class="ios-btn ios-btn-secondary" id="btn-add">新增一列</button>
+    <button type="button" class="ios-btn ios-btn-secondary" id="btn-import">匯入 CSV</button>
+    <button type="button" class="ios-btn ios-btn-primary" id="btn-export">匯出 CSV</button>
+    <button type="button" class="ios-btn ios-btn-danger" id="btn-clear">清空表格</button>
+    <input type="file" id="file-import" accept=".csv,text/csv" hidden>
+  </div>
+
+  <div class="ios-section-label">租借資料（自動保存在這台電腦的瀏覽器）</div>
+  <div class="ios-card">
+    <div class="ios-table-wrap">
+      <table class="ios-table">
+        <thead><tr id="table-head"></tr></thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  const COLUMNS = ['場地名稱', '信箱', '租用日期', '租用時段', '人數', '申請單位及負責人名稱', '活動名稱', '活動編號'];
+  const PLACES = ['多功能空間5', '多功能空間3', '多功能空間2', '多功能空間1'];
+  const PERIODS = ['08:30-12:30', '13:00-17:00', '18:00-22:00'];
+  const DATE_RULE_MESSAGE = '社宅雲僅接受使用日前兩週提出的線上申請';
+  const STORAGE_KEY = 'venue-csv-editor:v1';
+
+  const FIELD_TYPES = {
+    '場地名稱': { type: 'select', options: PLACES },
+    '信箱': { type: 'text', placeholder: 'name@example.com', wide: true, inputmode: 'email' },
+    '租用日期': { type: 'date' },
+    '租用時段': { type: 'select', options: PERIODS },
+    '人數': { type: 'text', inputmode: 'numeric' },
+    '申請單位及負責人名稱': { type: 'text', wide: true },
+    '活動名稱': { type: 'text', wide: true },
+    '活動編號': { type: 'text' },
+  };
+
+  const $ = (id) => document.getElementById(id);
+  const tbody = $('table-body');
+
+  // ---------- 資料與保存 ----------
+
+  const newId = () =>
+    (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).slice(2);
+
+  function newRow(from) {
+    const row = { id: newId() };
+    for (const c of COLUMNS) row[c] = from ? String(from[c] ?? '') : '';
+    return row;
+  }
+
+  function loadRows() {
+    try {
+      const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+      if (Array.isArray(data) && data.length) return data.map((r) => newRow(r));
+    } catch (e) { /* 資料損毀就從空白開始 */ }
+    return [newRow()];
+  }
+
+  let storageWarned = false;
+  function saveRows() {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(rows.map((r) => {
+        const o = {};
+        for (const c of COLUMNS) o[c] = r[c];
+        return o;
+      })));
+    } catch (e) {
+      if (!storageWarned) {
+        storageWarned = true;
+        toast('此瀏覽器無法自動保存，關閉前請記得匯出');
+      }
+    }
+  }
+
+  let rows = loadRows();
+
+  const isRowEmpty = (row) => COLUMNS.every((c) => !String(row[c] ?? '').trim());
+
+  // ---------- 日期規則 ----------
+
+  const pad = (n, w = 2) => String(n).padStart(w, '0');
+  const formatYmd = (d) => `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}`;
+
+  function parseYmd(s) {
+    if (!/^\d{8}$/.test(s)) return null;
+    const y = +s.slice(0, 4), m = +s.slice(4, 6), d = +s.slice(6, 8);
+    const date = new Date(y, m - 1, d);
+    if (date.getFullYear() !== y || date.getMonth() !== m - 1 || date.getDate() !== d) return null;
+    return date;
+  }
+
+  function earliestDate() {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() + 16);
+  }
+
+  const isDateAllowed = (s) => {
+    const d = parseYmd(s);
+    return !!d && d >= earliestDate();
+  };
+
+  // ---------- 共用 UI ----------
+
+  function toast(text) {
+    const t = document.createElement('div');
+    t.className = 'ios-toast';
+    t.textContent = text;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  // buttons: [{ text, value, isDefault, isDanger }]
+  function dialog({ title, lines = [], list = [], buttons = [{ text: '好', value: true, isDefault: true }] }) {
+    return new Promise((resolve) => {
+      const backdrop = document.createElement('div');
+      backdrop.className = 'ios-alert-backdrop';
+      const box = document.createElement('div');
+      box.className = 'ios-alert';
+      box.setAttribute('role', 'dialog');
+
+      const body = document.createElement('div');
+      body.className = 'ios-alert-body';
+      const h = document.createElement('div');
+      h.className = 'ios-alert-title';
+      h.textContent = title;
+      body.appendChild(h);
+      for (const line of lines) {
+        const p = document.createElement('p');
+        p.className = 'ios-alert-message';
+        p.textContent = line;
+        body.appendChild(p);
+      }
+      if (list.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'ios-error-list';
+        for (const item of list) {
+          const li = document.createElement('li');
+          li.textContent = item;
+          ul.appendChild(li);
+        }
+        body.appendChild(ul);
+      }
+
+      const btns = document.createElement('div');
+      btns.className = 'ios-alert-buttons';
+      const close = (value) => {
+        document.removeEventListener('keydown', onKey);
+        backdrop.remove();
+        resolve(value);
+      };
+      for (const b of buttons) {
+        const el = document.createElement('button');
+        el.type = 'button';
+        el.textContent = b.text;
+        if (b.isDefault) el.classList.add('is-default');
+        if (b.isDanger) el.classList.add('is-danger');
+        el.addEventListener('click', () => close(b.value));
+        btns.appendChild(el);
+      }
+      const onKey = (e) => {
+        if (e.key === 'Escape') close(buttons.length > 1 ? buttons[0].value : buttons[buttons.length - 1].value);
+      };
+      document.addEventListener('keydown', onKey);
+
+      box.append(body, btns);
+      backdrop.appendChild(box);
+      document.body.appendChild(backdrop);
+      btns.lastChild.focus();
+    });
+  }
+
+  const showList = (title, list) => dialog({ title, list });
+
+  // ---------- 表格 ----------
+
+  function renderHead() {
+    const tr = $('table-head');
+    for (const label of ['#', ...COLUMNS, '']) {
+      const th = document.createElement('th');
+      th.textContent = label;
+      tr.appendChild(th);
+    }
+  }
+
+  function makeSelect(row, col, options) {
+    const sel = document.createElement('select');
+    sel.className = 'ios-field';
+    const values = ['', ...options];
+    if (row[col] && !options.includes(row[col])) values.push(row[col]);
+    for (const v of values) {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v && !options.includes(v) ? `${v}（不在選單中）` : v;
+      sel.appendChild(opt);
+    }
+    sel.value = row[col];
+    sel.addEventListener('change', () => {
+      row[col] = sel.value;
+      saveRows();
+    });
+    return sel;
+  }
+
+  function makeInput(row, col, cfg) {
+    const input = document.createElement('input');
+    input.className = 'ios-field';
+    input.type = 'text';
+    input.value = row[col];
+    if (cfg.placeholder) input.placeholder = cfg.placeholder;
+    if (cfg.inputmode) input.inputMode = cfg.inputmode;
+    input.addEventListener('input', () => {
+      row[col] = input.value;
+      saveRows();
+    });
+    return input;
+  }
+
+  function makeDateInput(row) {
+    const input = document.createElement('input');
+    input.className = 'ios-field';
+    input.type = 'text';
+    input.inputMode = 'numeric';
+    input.placeholder = '20261130';
+    input.value = row['租用日期'];
+    input.addEventListener('input', () => {
+      const digits = input.value.replace(/\D/g, '').slice(0, 8);
+      if (digits !== input.value) input.value = digits;
+      const previous = row['租用日期'];
+      row['租用日期'] = digits;
+      saveRows();
+      if (digits !== previous && digits.length === 8 && parseYmd(digits) && !isDateAllowed(digits)) {
+        dialog({
+          title: '日期不符規定',
+          lines: [DATE_RULE_MESSAGE, `最早可選 ${formatYmd(earliestDate())}`],
+        });
+      }
+    });
+    return input;
+  }
+
+  function makeLink(text, danger, onClick) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = danger ? 'ios-link ios-link-danger' : 'ios-link';
+    b.textContent = text;
+    b.addEventListener('click', onClick);
+    return b;
+  }
+
+  function render() {
+    tbody.textContent = '';
+    rows.forEach((row, index) => {
+      const tr = document.createElement('tr');
+
+      const idx = document.createElement('td');
+      idx.className = 'ios-index';
+      idx.textContent = String(index + 1);
+      tr.appendChild(idx);
+
+      for (const col of COLUMNS) {
+        const cfg = FIELD_TYPES[col];
+        const td = document.createElement('td');
+        if (cfg.wide) td.className = 'ios-wide';
+        let field;
+        if (cfg.type === 'select') field = makeSelect(row, col, cfg.options);
+        else if (cfg.type === 'date') field = makeDateInput(row);
+        else field = makeInput(row, col, cfg);
+        field.setAttribute('aria-label', `第 ${index + 1} 列 ${col}`);
+        td.appendChild(field);
+        tr.appendChild(td);
+      }
+
+      const actions = document.createElement('td');
+      actions.className = 'ios-actions';
+      actions.append(
+        makeLink('複製', false, () => {
+          const i = rows.indexOf(row);
+          rows.splice(i + 1, 0, newRow(row));
+          saveRows();
+          render();
+        }),
+        makeLink('刪除', true, () => {
+          if (rows.length <= 1) {
+            toast('至少要保留一列');
+            return;
+          }
+          rows.splice(rows.indexOf(row), 1);
+          saveRows();
+          render();
+        }),
+      );
+      tr.appendChild(actions);
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ---------- 檢查 ----------
+
+  function getErrors() {
+    const errors = [];
+    rows.forEach((row, i) => {
+      if (isRowEmpty(row)) return;
+      const n = i + 1;
+
+      const date = String(row['租用日期']);
+      if (!/^\d{8}$/.test(date)) errors.push(`第 ${n} 列：租用日期，必須是 8 碼數字，例如 20261130`);
+      else if (!parseYmd(date)) errors.push(`第 ${n} 列：租用日期，${date} 不是有效的日期`);
+      else if (!isDateAllowed(date)) errors.push(`第 ${n} 列：租用日期，${DATE_RULE_MESSAGE}`);
+
+      const mail = String(row['信箱']).trim();
+      if (mail && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(mail)) errors.push(`第 ${n} 列：信箱，${mail} 格式不正確`);
+
+      const place = String(row['場地名稱']);
+      if (place && !PLACES.includes(place)) errors.push(`第 ${n} 列：場地名稱，${place} 不在選單中`);
+
+      const period = String(row['租用時段']);
+      if (period && !PERIODS.includes(period)) errors.push(`第 ${n} 列：租用時段，${period} 不在選單中`);
+    });
+    return errors;
+  }
+
+  // ---------- 匯出 ----------
+
+  const csvCell = (v) => `"${String(v ?? '').trim().replace(/"/g, '""')}"`;
+
+  function buildCsvBytes(dataRows) {
+    const lines = [COLUMNS.map(csvCell).join(',')];
+    for (const r of dataRows) lines.push(COLUMNS.map((c) => csvCell(r[c])).join(','));
+    const text = lines.join('\r\n') + '\r\n';
+    const body = new TextEncoder().encode(text);
+    const bytes = new Uint8Array(body.length + 3);
+    bytes.set([0xEF, 0xBB, 0xBF]);
+    bytes.set(body, 3);
+    return bytes;
+  }
+
+  function downloadBlob(blob, name, reason) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 10000);
+    toast(`${reason}已下載到「下載」資料夾：${name}`);
+  }
+
+  async function exportCsv() {
+    const dataRows = rows.filter((r) => !isRowEmpty(r));
+    if (!dataRows.length) {
+      toast('沒有可匯出的資料');
+      return;
+    }
+    const errors = getErrors();
+    if (errors.length) {
+      showList('無法匯出，請修正以下欄位', errors);
+      return;
+    }
+
+    const now = new Date();
+    const name = `場地租借_${formatYmd(now)}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}.csv`;
+    const blob = new Blob([buildCsvBytes(dataRows)], { type: 'text/csv;charset=utf-8' });
+
+    if (!window.showSaveFilePicker) {
+      downloadBlob(blob, name, '');
+      return;
+    }
+    try {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: name,
+        types: [{ description: 'CSV 檔案', accept: { 'text/csv': ['.csv'] } }],
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      toast(`已儲存：${handle.name}`);
+    } catch (e) {
+      if (e && e.name === 'AbortError') toast('已取消匯出');
+      else downloadBlob(blob, name, '無法開啟存檔視窗，');
+    }
+  }
+
+  // ---------- 匯入 ----------
+
+  function decodeCsv(bytes) {
+    if (bytes.length >= 3 && bytes[0] === 0xEF && bytes[1] === 0xBB && bytes[2] === 0xBF) {
+      return new TextDecoder('utf-8').decode(bytes.subarray(3));
+    }
+    try {
+      return new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+    } catch (e) {
+      return new TextDecoder('big5').decode(bytes);
+    }
+  }
+
+  function parseCsv(text) {
+    const records = [];
+    let record = [];
+    let field = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (inQuotes) {
+        if (ch === '"') {
+          if (text[i + 1] === '"') { field += '"'; i++; }
+          else inQuotes = false;
+        } else {
+          field += ch;
+        }
+      } else if (ch === '"') {
+        inQuotes = true;
+      } else if (ch === ',') {
+        record.push(field);
+        field = '';
+      } else if (ch === '\r' || ch === '\n') {
+        if (ch === '\r' && text[i + 1] === '\n') i++;
+        record.push(field);
+        records.push(record);
+        record = [];
+        field = '';
+      } else {
+        field += ch;
+      }
+    }
+    if (field !== '' || record.length) {
+      record.push(field);
+      records.push(record);
+    }
+    return records;
+  }
+
+  function readCsv(bytes) {
+    const text = decodeCsv(bytes).replace(/^\uFEFF/, '');
+    if (!text.trim()) return { error: '檔案是空的' };
+
+    const records = parseCsv(text);
+    const header = (records[0] || []).map((h) => h.trim());
+    const missing = COLUMNS.filter((c) => !header.includes(c));
+    if (missing.length) return { error: `缺少欄位：${missing.join('、')}` };
+
+    const indexOf = Object.fromEntries(COLUMNS.map((c) => [c, header.indexOf(c)]));
+    const result = [];
+    for (const rec of records.slice(1)) {
+      const row = {};
+      for (const c of COLUMNS) row[c] = String(rec[indexOf[c]] ?? '').trim();
+      row['租用日期'] = row['租用日期'].replace(/\D/g, '');
+      if (!isRowEmpty(row)) result.push(row);
+    }
+    if (!result.length) return { error: '檔案沒有任何資料列' };
+    return { rows: result };
+  }
+
+  async function importFile(file) {
+    let result;
+    try {
+      result = readCsv(new Uint8Array(await file.arrayBuffer()));
+    } catch (e) {
+      result = { error: '無法讀取檔案' };
+    }
+
+    if (result.error) {
+      showList('匯入檔案異常，表格未變更', [result.error, '請確認是由本程式匯出的 CSV']);
+      return;
+    }
+
+    rows = result.rows.map((r) => newRow(r));
+    saveRows();
+    render();
+
+    const count = result.rows.length;
+    const errors = getErrors();
+    if (errors.length) showList(`已匯入 ${count} 列，請修正以下欄位`, errors);
+    else toast(`已匯入 ${count} 列`);
+  }
+
+  // ---------- 啟動 ----------
+
+  $('subtitle').textContent =
+    '逐列填寫租借資料，可新增或複製列，完成後匯出 CSV 給 Automa 流程使用。租用日期請輸入 8 碼數字，例如 20261130。' +
+    `租用日期需晚於今天 15 天以上（最早可選 ${formatYmd(earliestDate())}）。` +
+    '可匯入先前匯出的 CSV 繼續編輯（會取代目前表格）。';
+
+  $('btn-add').addEventListener('click', () => {
+    rows.push(newRow());
+    saveRows();
+    render();
+  });
+
+  $('btn-export').addEventListener('click', exportCsv);
+
+  const fileInput = $('file-import');
+  $('btn-import').addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', async () => {
+    const file = fileInput.files && fileInput.files[0];
+    fileInput.value = '';
+    if (file) await importFile(file);
+  });
+
+  $('btn-clear').addEventListener('click', async () => {
+    const ok = await dialog({
+      title: '清空表格？',
+      lines: ['所有資料都會刪除且無法復原，建議先匯出 CSV。'],
+      buttons: [
+        { text: '取消', value: false },
+        { text: '清空', value: true, isDefault: true, isDanger: true },
+      ],
+    });
+    if (!ok) return;
+    rows = [newRow()];
+    saveRows();
+    render();
+    toast('已清空表格');
+  });
+
+  renderHead();
+  render();
+})();
+</script>
+</body>
+</html>
